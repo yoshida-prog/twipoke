@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>twipoke</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
+  <body>
+
+    <div>
+      <img src="<%- profileImage %>">
+      <p><%= twitterName %></p>
+      <p><%= twitterID %></p>
+      <p>レーティング: <%= rate %></p>
+      <p>勝ち: <%= win %>回 / 負け: <%= lose %>回</p>
+    </div>
+    
+    <div>
+      <button id="createRoomBtn">対戦部屋を作る</button>
+      <button id="searchRoomBtn">対戦部屋を探す</button>
+    </div>
+
+    <script>
+      const createRoomBtn = document.getElementById('createRoomBtn');
+      const searchRoomBtn = document.getElementById('searchRoomBtn');
+      createRoomBtn.addEventListener('click', (e) => {
+        const createRoomForm = document.createElement('form');
+        const roomID = Math.floor(Math.random() * (999999 - 100000) + 100000);
+        createRoomForm.action = '/room/' + roomID;
+        createRoomForm.method = 'GET';
+        document.body.append(createRoomForm);
+        createRoomForm.submit();
+      });
+      searchRoomBtn.addEventListener('click', (e) => {
+        const searchRoomForm = document.createElement('form');
+        searchRoomForm.action = '/search';
+        searchRoomForm.method = 'GET';
+        document.body.append(searchRoomForm);
+        searchRoomForm.submit();
+      });
+    </script>
+  </body>
+</html>

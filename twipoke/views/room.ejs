@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>twipoke</title>
+    <link rel="stylesheet" href="/stylesheets/style.css"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
+  <body>
+
+    <div>
+        <p>部屋ID： <%= roomID %></p>
+    </div>
+
+    <div>
+        <img src="<%- profileImage %>">
+        <p><%= twitterName %></p>
+        <p><%= twitterID %></p>
+        <p>レーティング: <%= rate %></p>
+        <p>勝ち: <%= win %>回</p>
+        <p>負け: <%= lose %>回</p>
+    </div>
+
+    <div id="matchStartContainer">
+        <button id="matchStartBtn">対戦準備を始める</button>
+    </div>
+
+    <div id="enemyContainer">
+
+    </div>
+
+    <script src="/socket.io.js"></script>
+    <script>
+        const enemyContainer = document.getElementById('enemyContainer');
+        const matchStartContainer = document.getElementById('matchStartContainer');
+        const matchStartBtn = document.getElementById('matchStartBtn');
+        const roomID = '<%= roomID %>';
+        const profileImage = '<%= profileImage %>';
+        const twitterName = '<%= twitterName %>';
+        const twitterID = '<%= twitterID %>';
+        const rate = <%= rate %>;
+        const win = <%= win %>;
+        const lose = <%= lose %>;
+        var flg = false;
+
+        // socket.io接続後、対戦部屋作成イベントを発火
+        var socket = io();
+        socket.emit('join', {
+            roomID,
+            profileImage,
+            twitterName,
+            twitterID,
+            rate,
+            win,
+            lose
+        });
+
+        // 対戦部屋に2人目が入室したらサーバー側から相手のデータを受け取りフロントに反映させる
+        // その後、自分のデータを相手に送信するイベントを発火
+        socket.on('sendMyData', data => {
+            if (flg === false) {
+                const imgElement = document.createElement('img');
+                const enemyDatas = [data.twitterName, data.twitterID, 'レーティング: ' + data.rate, '勝ち: ' + data.win + '回', '負け: ' + data.lose + '回'];
+                imgElement.src = data.profileImage;
+                enemyContainer.appendChild(imgElement);
+                for (const enemyData of enemyDatas) {
+                    const pElement = document.createElement('p');
+                    pElement.textContent = enemyData;
+                    enemyContainer.appendChild(pElement);
+                }
+                flg = !flg;
+                if (flg === true) {
+                    socket.emit('sendEnemyData', {
+                        roomID,
+                        profileImage,
+                        twitterName,
+                        twitterID,
+                        rate,
+                        win,
+                        lose
+                    });
+                }
+            }
+        });
+
+        // 誰かが入室したら対戦準備開始のボタンを表示させる
+        const mo_enemyContainer = new MutationObserver(() => {
+            matchStartContainer.style.display = 'block';
+        });
+        mo_enemyContainer.observe(enemyContainer, {childList: true});
+
+        // 対戦準備開始ボタンを押したら、waitingFlgを持たせてサーバー側で相手が待機状態か確認する
+        matchStartBtn.addEventListener('click', () => {
+            const waitingFlg = true;
+            socket.emit('waitingResponse', {
+                roomID,
+                waitingFlg
+            });
+        });
+
+        // もし相手が待機状態であれば双方は対戦準備画面に遷移する。
+        socket.on('startMatchPreparation', () => {
+            const matchRoomForm = document.createElement('form');
+            matchRoomForm.action = '/matchPreparation/' + roomID;
+            matchRoomForm.method = 'GET';
+            document.body.append(matchRoomForm);
+            matchRoomForm.submit();
+        });
+
+        // もし相手が待機状態でなければボタンを非活性にして相手の応答を待つ。
+        socket.on('waitingEnemy', () => {
+            const waitingMsg = '相手の応答を待っています...';
+            matchStartBtn.textContent = waitingMsg;
+            matchStartBtn.disabled = true;
+        })
+    </script>
+
+  </body>
+</html>

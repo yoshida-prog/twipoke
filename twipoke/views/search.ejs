@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>twipoke</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
+  <body>
+
+    <div>
+        <input id="searchRoomID" type="text" placeholder="部屋IDを半角数字で入力">
+        <button id="searchSubmit" type="submit">対戦部屋を検索</button>
+    </div>
+    
+    <script>
+        const searchRoomID = document.getElementById('searchRoomID');
+        const searchSubmit = document.getElementById('searchSubmit');
+        searchSubmit.addEventListener('click', (e) => {
+            const searchRoomIDForm = document.createElement('form');
+            const roomID = Number(searchRoomID.value);
+            searchRoomIDForm.action = '/room/' + roomID;
+            searchRoomIDForm.method = 'GET';
+            document.body.append(searchRoomIDForm);
+            searchRoomIDForm.submit();
+        });
+    </script>
+
+  </body>
+</html>
