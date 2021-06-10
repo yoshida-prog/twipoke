@@ -1,5 +1,4 @@
 var twitter = require('twitter');
-var passport = require('passport');
 var twitterConfig = require('../config/twitter_config');
 var firestoreDB = require('../config/firestore_config');
 
@@ -9,10 +8,10 @@ module.exports = (req, res, next) => {
     var client = new twitter({
         consumer_key: twitterConfig.consumer_key,
         consumer_secret: twitterConfig.consumer_secret,
-        access_token_key: passport.session.twitter_token,
-        access_token_secret: passport.session.twitter_token_secret
+        access_token_key: req.cookies.tokenKey,
+        access_token_secret: req.cookies.tokenSecret
     });
-    const userID = passport.session.id;
+    const userID = req.cookies.userID;
     //--------------------------------------------------------------------
 
     // ログインユーザーのTwitterアカウント名とTwitterIDを取得---------------------
@@ -30,37 +29,6 @@ module.exports = (req, res, next) => {
         });
     });
     //---------------------------------------------------------------------
-    
-    // ログインしたユーザーのフォロワーのtwitterIDを取得後、各フォロワーのツイートを取得
-    // user.then((value) => {
-    //     const loginUserParams = { user_id: value.twitterID, count: 10 };
-    //     const followerParams = [];
-    //     const followerTL = [];
-    //     const followers = new Promise ( (resolve, reject) => {
-    //         client.get('followers/list', loginUserParams, (error, followers, response) => {
-    //             if (!error) {
-    //                 const followersArray = followers.users;
-    //                 followersArray.forEach( (follower) => {
-    //                     const screenName = '@' + follower.screen_name;
-    //                     followerParams.push(screenName);
-    //                 });
-    //                 resolve(followerParams);
-    //             } else {
-    //                 res.redirect('/');
-    //             }
-    //         });
-    //     });
-    //     followers.then(async (value) => {
-    //         for (const element of value) {
-    //             const params = { screen_name: element, count: 1};
-    //             const tweets = await client.get('statuses/user_timeline', params);
-    //             const tweet = tweets[0].text;
-    //             console.log(tweet);
-    //             console.log('----------');
-    //         }
-    //     });
-    // });
-    // --------------------------------------------------------------------
 
     // ログインしたことがあればtwitterNameとtwitterIDを更新
     // なければデータを新規登録------------------------------------------------

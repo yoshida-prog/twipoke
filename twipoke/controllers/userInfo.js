@@ -1,5 +1,4 @@
 var twitter = require('twitter');
-var passport = require('passport');
 var twitterConfig = require('../config/twitter_config');
 var firestoreDB = require('../config/firestore_config');
 
@@ -9,10 +8,10 @@ module.exports = (req, res, next) => {
     var client = new twitter({
         consumer_key: twitterConfig.consumer_key,
         consumer_secret: twitterConfig.consumer_secret,
-        access_token_key: passport.session.twitter_token,
-        access_token_secret: passport.session.twitter_token_secret
+        access_token_key: req.cookies.tokenKey,
+        access_token_secret: req.cookies.tokenSecret
     });
-    const userID = passport.session.id;
+    const userID = req.cookies.userID;
     //--------------------------------------------------------------------
 
     // ログインユーザーのTwitterアカウント名とTwitterIDを取得---------------------
