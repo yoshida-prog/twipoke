@@ -4,7 +4,7 @@ var firestoreDB = require('../config/firestore_config');
 
 module.exports = (req, res, next) => {
 
-    // twitterAPI設定-----------------------------------------------------
+    // twitterAPI設定----------------------------------------------
     var client = new twitter({
         consumer_key: twitterConfig.consumer_key,
         consumer_secret: twitterConfig.consumer_secret,

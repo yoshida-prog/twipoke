@@ -2,37 +2,44 @@
 <html>
   <head>
     <title>twipoke</title>
-    <link rel="stylesheet" href="/stylesheets/style.css"/>
+    <link rel="stylesheet" href="/stylesheets/room.css"/>
     <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
   <body>
 
-    <div>
-        <p>部屋ID： <%= roomID %></p>
+    <div class="roomInfoContainer">
+        <h3>部屋ID： <%= roomID %></h3>
+        <p>友達に部屋IDを教えて対戦しよう!!</p>
     </div>
 
-    <div>
-        <img src="<%- profileImage %>">
-        <p><%= twitterName %></p>
-        <p><%= twitterID %></p>
+    <div class="profileContainer">
+        <div class="twitterInfo">
+            <img src="<%- profileImage %>">
+            <div class="twitterNameID">
+                <p><%= twitterName %></p>
+                <p><%= twitterID %></p>
+            </div>
+        </div>
         <p>レーティング: <%= rate %></p>
-        <p>勝ち: <%= win %>回</p>
-        <p>負け: <%= lose %>回</p>
+        <p><%= win+lose %>戦 <%= win %>勝 <%= lose %>負</p>
     </div>
 
     <div id="matchStartContainer">
-        <button id="matchStartBtn">対戦準備を始める</button>
+        <button id="matchStartBtn" class="btn" disabled="true">対戦準備を始める</button>
     </div>
 
-    <div id="enemyContainer">
-
+    <div id="enemyContainer" class="profileContainer">
+        <div id="enemyTwiInfo" class="twitterInfo">
+            <div id="enemyNameID" class="twitterNameID"></div>
+        </div>
     </div>
 
     <script src="/socket.io.js"></script>
     <script>
         const enemyContainer = document.getElementById('enemyContainer');
-        const matchStartContainer = document.getElementById('matchStartContainer');
+        const enemyTwiInfo = document.getElementById('enemyTwiInfo');
         const matchStartBtn = document.getElementById('matchStartBtn');
+        const enemyNameID = document.getElementById('enemyNameID');
         const roomID = '<%= roomID %>';
         const profileImage = '<%= profileImage %>';
         const twitterName = '<%= twitterName %>';
@@ -40,10 +47,24 @@
         const rate = <%= rate %>;
         const win = <%= win %>;
         const lose = <%= lose %>;
+        const referer = '<%= referer %>';
+        const isCameSearchID = <%= isCameSearchID %>;
         var flg = false;
 
         // socket.io接続後、対戦部屋作成イベントを発火
         var socket = io();
+
+        if (isCameSearchID === true) {
+            socket.emit('enemyCheck', {
+                roomID,
+                isCameSearchID
+            });
+        }
+
+        socket.on('redirectSearchPage', data => {
+            location.href = referer;
+        })
+
         socket.emit('join', {
             roomID,
             profileImage,
@@ -59,14 +80,26 @@
         socket.on('sendMyData', data => {
             if (flg === false) {
                 const imgElement = document.createElement('img');
-                const enemyDatas = [data.twitterName, data.twitterID, 'レーティング: ' + data.rate, '勝ち: ' + data.win + '回', '負け: ' + data.lose + '回'];
+                const enemyDatas = [data.twitterName, data.twitterID];
+                const enemyBattleDatas = [(data.win + data.lose) + '戦 ', data.win + '勝 ', data.lose + '負'];
+                const enemyRating = data.rate;
+                const ratingElement = document.createElement('p');
+                const battleDatasElement = document.createElement('p');
+                ratingElement.textContent = 'レーティング: ' + enemyRating;
+                enemyContainer.appendChild(ratingElement);
                 imgElement.src = data.profileImage;
-                enemyContainer.appendChild(imgElement);
-                for (const enemyData of enemyDatas) {
-                    const pElement = document.createElement('p');
-                    pElement.textContent = enemyData;
-                    enemyContainer.appendChild(pElement);
+                enemyTwiInfo.appendChild(imgElement);
+                for (const value of enemyDatas) {
+                    const p = document.createElement('p');
+                    p.textContent = value;
+                    enemyNameID.appendChild(p);
                 }
+                for (const value of enemyBattleDatas) {
+                    const span = document.createElement('span');
+                    span.textContent = value;
+                    battleDatasElement.appendChild(span);
+                }
+                enemyContainer.appendChild(battleDatasElement);
                 flg = !flg;
                 if (flg === true) {
                     socket.emit('sendEnemyData', {
@@ -82,9 +115,10 @@
             }
         });
 
-        // 誰かが入室したら対戦準備開始のボタンを表示させる
+        // 誰かが入室したら対戦準備開始のボタンを押下可能にする
         const mo_enemyContainer = new MutationObserver(() => {
-            matchStartContainer.style.display = 'block';
+            matchStartBtn.disabled = false;
+            matchStartBtn.style.opacity = 1;
         });
         mo_enemyContainer.observe(enemyContainer, {childList: true});
 
@@ -100,7 +134,7 @@
         // もし相手が待機状態であれば双方は対戦準備画面に遷移する。
         socket.on('startMatchPreparation', () => {
             const matchRoomForm = document.createElement('form');
-            matchRoomForm.action = '/matchPreparation/' + roomID;
+            matchRoomForm.action = '/createStatus/' + roomID;
             matchRoomForm.method = 'GET';
             document.body.append(matchRoomForm);
             matchRoomForm.submit();

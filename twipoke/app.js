@@ -3,6 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var bodyParser = require('body-parser');
 var twitterConfig = require('./config/twitter_config');
 var indexRouter = require('./routes/index');
 
@@ -46,6 +47,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'node_modules/socket.io/client-dist')));
+app.use(bodyParser.urlencoded({extended: false}));
 // --------------------------
 app.use(passport.initialize());
 app.use(passport.session());

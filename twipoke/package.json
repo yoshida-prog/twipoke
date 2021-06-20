@@ -6,6 +6,7 @@
     "start": "nodemon ./bin/www"
   },
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "ejs": "~2.6.1",
@@ -19,6 +20,7 @@
     "oauth": "^0.9.15",
     "passport": "^0.4.1",
     "passport-twitter": "^1.0.4",
+    "referrer": "^1.0.2",
     "sessionstorage": "^0.1.0",
     "socket.io": "^4.1.2",
     "twitter": "^1.7.1"

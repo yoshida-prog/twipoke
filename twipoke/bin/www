@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('twipoke:server');
 var http = require('http');
+var firestoreDB = require('../config/firestore_config');
 // const { deconstructPacket } = require('../public/socket.io/client-dist/socket.io');
 
 /**
@@ -33,6 +34,16 @@ var io = require('socket.io')(server);
 
 // 対戦ルームの入室処理。相手が入ってきたら自分のデータを相手に送信する。
 io.sockets.on('connection', (socket) => {
+
+  socket.on('enemyCheck', async (data) => {
+    socket.join(data.roomID);
+    const ids = await io.in(data.roomID).allSockets();
+    if (ids.size === 1) {
+      io.to(socket.id).emit('redirectSearchPage');
+      socket.disconnect(true);
+    }
+  })
+
   socket.on('join', async (data) => {
     socket.join(data.roomID);
     const myID = socket.id;
@@ -51,6 +62,31 @@ io.sockets.on('connection', (socket) => {
         }
       }
     };
+  });
+
+  socket.on('joinPreparationRoom', async (data) => {
+    socket.join(data.roomID);
+    const allID = await io.in(data.roomID).allSockets();
+    const types = data.types;
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('myFollowersType', {
+          types
+        });
+      }
+    }
+  });
+
+  socket.on('sendMyFollowersType', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    const types = data.types;
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('myFollowersType', {
+          types
+        });
+      }
+    }
   });
 
   socket.on('sendEnemyData', async (data) => {

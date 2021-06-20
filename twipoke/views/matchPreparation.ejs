@@ -2,12 +2,217 @@
 <html>
   <head>
     <title>twipoke</title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='/stylesheets/matchPreparation.css' />
     <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
   <body>
 
-    Hello
+    <div class="announce">
+      <p>戦闘に参加させるフォロワーを3人選んでね</p>
+      <p id="enemyTypes"></p>
+    </div>
+
+    <div id="followers" class="followersContainer">
+      <% Object.keys(followersStatus).forEach((key, index) => { %>
+        <% const value = followersStatus[key] %>
+        <div class="follower">
+          <div id="follower<%= index %>" class="dammyContainer"></div>
+          <div class="followerInfo">
+            <div id="follower<%= index %>Profile" class="followerProfile">
+              <img src="<%= value.image %>" id="follower<%= index %>Img">
+              <div class="followerHead">
+                <p id="follower<%= index %>Name" class="followerName"><%= value.name %></p>
+                <p id="follower<%= index %>Type" class="followerType">タイプ: <%= value.followerType %></p>
+              </div>
+            </div>
+          </div>
+          <div class="followerStatus">
+            <div class="status">
+              <span>HP</span>
+              <span><%= value.hp %></span>
+            </div>
+            <div class="status">
+              <span>こうげき</span>
+              <span><%= value.attack %></span>
+            </div>
+            <div class="status">
+              <span>ぼうぎょ</span>
+              <span><%= value.defense %></span>
+            </div>
+            <div class="status">
+              <span>すばやさ</span>
+              <span><%= value.speed %></span>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <% Object.keys(followersStatus).forEach((key, index) => { %>
+      <div id="follower<%= index %>Skills" class="skillsContainer">
+        <% const value = followersStatus[key] %>
+        <div class="followerStatusContainer">
+          <img src="<%= value.image %>">
+          <div class="followerInfo">
+            <div class="followerHead">
+              <p class="followerName"><%= value.name %></p>
+              <p class="followerType">タイプ: <%= value.followerType %></p>
+            </div>
+            <div class="followerStatus">
+              <div class="status">
+                <span>HP</span>
+                <span><%= value.hp %></span>
+              </div>
+              <div class="status">
+                <span>こうげき</span>
+                <span><%= value.attack %></span>
+              </div>
+              <div class="status">
+                <span>ぼうぎょ</span>
+                <span><%= value.defense %></span>
+              </div>
+              <div class="status">
+                <span>すばやさ</span>
+                <span><%= value.speed %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% for (var i = 0; i < 4; i++) { %>
+          <% const skillNum = 'tweet' + i; %>
+          <% const skill = followersStatus[key][skillNum] %>
+          <% const accuracy = (skill.accuracy >= 100) ? 100 : skill.accuracy %>
+          <div class="skill">
+            <p><%= skill.tweet %></p>
+            <p>タイプ: <%= skill.type %></p>
+            <p>こうげきりょく: <%= skill.attack %></p>
+            <p>めいちゅうりつ: <%= accuracy %></p>
+          </div>
+        <% } %>
+      </div>
+    <% }); %>
+
+    <div class="selectContainer">
+      <div id="selected" class="selectedFollower"></div>
+      <button id="selectBtn" data-followerid="follower0">このフォロワーを選ぶ</button>
+      <form id="decision" class="decisionForm" method="GET">
+        <button type="submit">対戦を始める</button>
+      </form>
+    </div>
+
+    <script src="/socket.io.js"></script>
+    <script>
+      const path = location.pathname.split('/');
+      const roomID = path[path.length - 1];
+      const followerElements = document.querySelectorAll('.follower');
+      const dammyContainer = document.querySelectorAll('.dammyContainer');
+      const selectedFollowers = document.getElementById('selected');
+      const selectBtn = document.getElementById('selectBtn');
+      const decision = document.getElementById('decision');
+
+      // 選んだフォロワーの技構成を下画面に表示する関数
+      const showToggle = (e) => {
+        const elementID = e.target.id;
+        const skillsDocumentID = elementID + 'Skills';
+        const skillsContainer = document.getElementById(skillsDocumentID);
+        const skillsAllContainer = document.querySelectorAll('.skillsContainer');
+        for (var j = 0; j < skillsAllContainer.length; j++) {
+          skillsAllContainer[j].style.display = 'none';
+          followerElements[j].style.backgroundColor = '#fbf0e4';
+        }
+        e.target.parentNode.style.backgroundColor = '#FFE3CE';
+        selectBtn.dataset.followerid = elementID;
+        skillsContainer.style.display = 'block';
+        if (selectedFollowers.classList.contains(elementID)) {
+          selectBtn.style.opacity = 0.25;
+          selectBtn.disabled = true;
+        } else {
+          selectBtn.style.opacity = 1;
+          selectBtn.disabled = false;
+        }
+      };
+
+      // 対戦に出すフォロワーを選択した際の処理をする関数
+      const selectFollower = (e) => {
+        const selectedID = e.target.dataset.followerid;
+        const selectedFollower = document.getElementById(selectedID);
+        const selectedFollowerImg = document.getElementById(selectedID + 'Img').getAttribute('src');
+        const imgElement = document.createElement('img');
+        const inputElement = document.createElement('input');
+        imgElement.setAttribute('src', selectedFollowerImg);
+        //imgElement.dataset.followerid = selectedID;
+        selectedFollowers.appendChild(imgElement);
+        inputElement.setAttribute('name', selectedID);
+        decision.appendChild(inputElement);
+        // 選択したフォロワーを選択不可にする
+        selectedFollowers.classList.add(selectedID);
+        // 3人目のフォロワーを選択したら選び直すか決定するか選ぶUIに切り替え
+        if (selectedFollowers.className.split(' ').length === 4) {
+          selectBtn.style.display = 'none';
+          decision.style.display = 'block';
+        } else {
+          selectBtn.style.opacity = 0.25;
+          selectBtn.disabled = true;
+        }
+      }
+
+      window.onload = () => {
+        followerElements[0].style.backgroundColor = '#FFE3CE';
+        decision.action = '/matchRoom/' + roomID;
+      }
+      
+      for (var i = 0; i < followerElements.length; i++) {
+        const followerElementHeight = window.getComputedStyle(followerElements[i]).getPropertyValue('height');
+        dammyContainer[i].style.height = followerElementHeight;
+        followerElements[i].addEventListener('click', showToggle, false);
+      };
+
+      selectBtn.addEventListener('click', selectFollower, false);
+
+      // socket.io処理--------------------------------------------------------------------
+      var socket = io();
+      var flg = false; 
+      const types = [];
+
+      <% followersType.forEach(type => { %>
+        types.push('<%= type %>');
+      <% }); %>
+
+      socket.emit('joinPreparationRoom', {
+        roomID,
+        types
+      });
+
+      socket.on('myFollowersType', data => {
+        if (flg === false) {
+          const enemyTypes = data.types;
+          // 敵のフォロワーたちのタイプを要素に入れる-----------------
+          const enemyTypesDoc = document.getElementById('enemyTypes');
+          enemyTypes.forEach((type, index) => {
+            const span = document.createElement('span');
+            if (index === 0) {
+              span.textContent = '相手のフォロワーのタイプは' + type + ', ';
+              enemyTypesDoc.appendChild(span);
+            } else if (index != 5) {
+              span.textContent = type + ', ';
+              enemyTypesDoc.appendChild(span);
+            } else {
+              span.textContent = type + 'です';
+              enemyTypesDoc.appendChild(span);
+            }
+          });
+          flg = !flg;
+          if (flg === true) {
+            socket.emit('sendMyFollowersType', {
+              roomID,
+              types
+            });
+          }
+        }
+      });
+      // ---------------------------------------------------------------------------------
+
+    </script>
 
   </body>
 </html>

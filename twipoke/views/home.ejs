@@ -2,22 +2,26 @@
 <html>
   <head>
     <title>twipoke</title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='/stylesheets/home.css' />
     <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
   <body>
 
-    <div>
-      <img src="<%- profileImage %>">
-      <p><%= twitterName %></p>
-      <p><%= twitterID %></p>
+    <div class="profileContainer">
+      <div class="twitterInfo">
+        <img src="<%- profileImage %>">
+        <div class="twitterNameID">
+          <p class="twitterName"><%= twitterName %></p>
+          <p class="twitterID"><%= twitterID %></p>
+        </div>
+      </div>
       <p>レーティング: <%= rate %></p>
-      <p>勝ち: <%= win %>回 / 負け: <%= lose %>回</p>
+      <p><%= win+lose %>戦 <%= win %>勝 <%= lose %>負</p>
     </div>
     
-    <div>
-      <button id="createRoomBtn">対戦部屋を作る</button>
-      <button id="searchRoomBtn">対戦部屋を探す</button>
+    <div class="btnContainer">
+      <button id="createRoomBtn" class="btn create">対戦部屋を作る</button>
+      <button id="searchRoomBtn" class="btn search">対戦部屋を探す</button>
     </div>
 
     <script>

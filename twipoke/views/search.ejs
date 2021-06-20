@@ -2,19 +2,25 @@
 <html>
   <head>
     <title>twipoke</title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='/stylesheets/search.css' />
     <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
   <body>
 
-    <div>
-        <input id="searchRoomID" type="text" placeholder="部屋IDを半角数字で入力">
-        <button id="searchSubmit" type="submit">対戦部屋を検索</button>
+    <div class="searchContainer">
+        <h3>対戦部屋ID</h3>
+        <input id="searchRoomID" class="textbox" type="text" placeholder="部屋IDを半角数字で入力">
     </div>
-    
+    <button id="searchSubmit" class="btn" type="submit">対戦部屋を検索</button>
+    <button id="returnHome" class="btn" type="submit">ホーム画面に戻る</button>
+
     <script>
         const searchRoomID = document.getElementById('searchRoomID');
         const searchSubmit = document.getElementById('searchSubmit');
+        const returnHome = document.getElementById('returnHome');
+        const referrer = document.referrer;
+        const referrerArray = referrer.split('/');
+        const referrerPath = referrerArray[referrerArray.length - 1];
         searchSubmit.addEventListener('click', (e) => {
             const searchRoomIDForm = document.createElement('form');
             const roomID = Number(searchRoomID.value);
@@ -23,6 +29,17 @@
             document.body.append(searchRoomIDForm);
             searchRoomIDForm.submit();
         });
+        returnHome.addEventListener('click', (e) => {
+            const returnHomeForm = document.createElement('form');
+            returnHomeForm.action = '/home';
+            returnHomeForm.method = 'GET';
+            document.body.append(returnHomeForm);
+            returnHomeForm.submit();
+        })
+
+        if (referrerPath.indexOf('home') === -1) {
+            alert('対戦部屋IDが間違っています');
+        }
     </script>
 
   </body>

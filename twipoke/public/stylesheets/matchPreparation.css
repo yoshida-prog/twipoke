@@ -1,0 +1,172 @@
+body {
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fbf0e4;
+    margin: 0 auto;
+    color: #2F2F2F;
+    font-size: 12px;
+}
+
+p {
+    margin: 0;
+}
+
+.announce {
+    padding: 10px;
+}
+
+.announce > span {
+    margin: 0;
+}
+
+.followersContainer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.dammyContainer {
+    opacity: 0;
+    position: absolute;
+    z-index: 10;
+    width: 100%;
+    height: 0;
+}
+
+.follower {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 50%;
+    box-sizing: border-box;
+    border: solid 1px;
+    border-radius: 6px;
+    position: relative;
+}
+
+.followerName {
+    margin: 0;
+}
+
+.followerType {
+    margin: 0;
+}
+
+.followerHead {
+    text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.followerProfile > img {
+    border-radius: 24px;
+    width: 48px;
+    height: 48px;
+}
+
+.followerProfile {
+    display: flex;
+    padding: 2px;
+}
+
+.followerStatus {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.status {
+    width: 50%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.status > span {
+    margin: 0 5px;
+}
+
+.followerInfo {
+    margin: 4px 0;
+}
+
+.followerStatusContainer {
+    display: flex;
+    flex-direction: row;
+}
+
+.followerStatusContainer > img {
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+}
+
+.skillsContainer {
+    padding: 10px 20px 1px 20px;
+    display: none;
+    background-color: #FFE3CE;
+}
+
+.skill {
+    display: flex;
+    flex-direction: column;
+    margin: 12px 0;
+}
+
+#follower0Skills {
+    display: block;
+}
+
+.selectContainer {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.selectedFollower {
+    width: 60%;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.selectedFollower > img {
+    border-radius: 24px;
+    width: 48px;
+    height: 48px;
+}
+
+#selectBtn {
+    display: inline-block;
+    width: 40%;
+    height: 64px;
+    font-size: 16px;
+    text-decoration: none;
+    outline: none;
+    background: #2F2F2F 0% 0% no-repeat padding-box;
+    color: #fafafa;
+    border: none;
+}
+
+.decisionForm {
+    display: none;
+    width: 40%;
+}
+
+.decisionForm > input {
+    display: none;
+}
+
+.decisionForm > button {
+    display: inline-block;
+    width: 100%;
+    height: 64px;
+    font-size: 20px;
+    text-decoration: none;
+    outline: none;
+    background: #e09494 0% 0% no-repeat padding-box;
+    color: #fafafa;
+    border: none;
+}

@@ -30,7 +30,7 @@ module.exports = (req, res, next) => {
     });
     //---------------------------------------------------------------------
 
-    // ログイン後画面で使うパラメータを取得--------------------------------------
+    // 対戦部屋画面で使うパラメータを取得--------------------------------------
     user.then(async (value) => {
         const doc = await firestoreDB.db.collection('Users').doc(userID).get();
         const twitterName = doc.data().twitterName;
@@ -39,8 +39,14 @@ module.exports = (req, res, next) => {
         const rate = doc.data().rate;
         const win = doc.data().win;
         const lose = doc.data().lose;
-        // roomIDを追加
         const roomID = req.params.id;
+        const referer = req.headers.referer;
+        const refererArray = referer.split('/');
+        const refererPath = refererArray[refererArray.length - 1];
+        var isCameSearchID = false;
+        if (refererPath === 'search?') {
+            isCameSearchID = true;
+        }
         res.render('room', {
             twitterName,
             twitterID,
@@ -48,7 +54,9 @@ module.exports = (req, res, next) => {
             rate,
             win,
             lose,
-            roomID
+            roomID,
+            referer,
+            isCameSearchID
         });
     });
     // --------------------------------------------------------------------
