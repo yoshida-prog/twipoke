@@ -6,6 +6,8 @@ var loginController = require('../controllers/login');
 var userInfoController = require('../controllers/userInfo');
 var createStatusController = require('../controllers/createStatus');
 var matchPreparationController = require('../controllers/matchPreparation');
+var matchRoomController = require('../controllers/matchRoom');
+var debugController = require('../controllers/debug');
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
@@ -37,13 +39,8 @@ router.get('/search', (req, res) => {
 
 router.get('/createStatus/:id', createStatusController);
 router.get('/matchPreparation/:id', matchPreparationController);
-router.get('/matchRoom/:id', (req, res) => {
-  console.log(req.query);
-  const keys = Object.keys(req.query);
-  console.log(keys);
-  keys.forEach(element => {
-    console.log(element);
-  });
-});
+router.get('/matchRoom/:id', matchRoomController);
+
+router.get('/debug', debugController);
 
 module.exports = router;

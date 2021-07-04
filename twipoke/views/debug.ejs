@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>twipoke</title>
+    <link rel="stylesheet" href="/stylesheets/matchRoom.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
+  <body>
+
+    <!-- 戦闘画面 -->
+    <div id="battleScreen" class="battleScreenContainer">
+        <div id="enemyFollower" class="enemyFollowerContainer">
+            <div class="enemyFollowerInfo">
+                <p id="enemyName"></p>
+                <div class="hpAndTypeContent">
+                    <div class="hpGauge"><span>HP</span><div id="enemyHPGauge" class="enemyGauge"></div></div>
+                    <p class="typeContent"><span id="enemyType"></span><span id="enemyHP"></span>/<span id="enemyMaxHP"></span></p>
+                </div>
+            </div>
+            <div class="followerIconContainer">
+                <img id="enemyIcon" class="followerIcon">
+                <div class="ground"></div>
+            </div>
+        </div>
+        <div id="myFollower" class="followerContainer" data-follower="<%= followers[0] %>">
+            <div class="followerIconContainer">
+                <img id="myIcon" class="followerIcon" src="<%= followerObj[followers[0]].image %>">
+                <div class="ground"></div>
+            </div>
+            <div class="myFollowerInfo">
+                <p id="myName"><%= followerObj[followers[0]].name %></p>
+                <div class="hpAndTypeContent">
+                    <div class="hpGauge"><span>HP</span><div id="myHPGauge" class="myGauge"></div></div>
+                    <p class="typeContent"><span id="myType"><%= followerObj[followers[0]].followerType %></span><span id="myHP"><%= followerObj[followers[0]].hp %></span>/<span id="myMaxHP"><%= followerObj[followers[0]].hp %></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- イベントログ -->
+    <div id="eventLog" class="eventLogContent">対戦相手の入室を待機中...</div>
+
+    <!-- 行動選択ボタン -->
+    <div id="selectBtn" class="selectActionContainer" data-follower="<%= followers[0] %>">
+        <button id="followersBtn" class="followerSelectBtn btn" disabled>フォロワー</button>
+        <button id="skillsBtn" class="skillSelectBtn btn" disabled>たたかう</button>
+    </div>
+
+    <div id="action" class="actionContainer">
+        <!-- フォロワー選択 -->
+        <div id="followers" class="followers">
+            <% Object.keys(followerObj).forEach((key, index) => { %>
+                <div id="follower<%= index %>" class="followersContainer">
+                    <div class="dammyContainer" data-containertype="follower" data-follower="<%= key %>" data-type="<%= followerObj[key].followerType %>" data-maxhp="<%= followerObj[key].hp %>" data-hp="<%= followerObj[key].hp %>"></div>
+                    <% const value = followerObj[key] %>
+                    <div class="followerStatusContainer">
+                        <img src="<%= value.image %>">
+                        <div class="followerInfo">
+                            <div class="followerHead">
+                                <p class="followerName"><%= value.name %></p>
+                                <p class="followerType">タイプ: <%= value.followerType %></p>
+                            </div>
+                            <div class="followerStatus">
+                                <div class="status">
+                                    <span>HP</span>
+                                    <span><%= value.hp %></span>
+                                </div>
+                                <div class="status">
+                                    <span>こうげき</span>
+                                    <span><%= value.attack %></span>
+                                </div>
+                                <div class="status">
+                                    <span>ぼうぎょ</span>
+                                    <span><%= value.defense %></span>
+                                </div>
+                                <div class="status">
+                                    <span>すばやさ</span>
+                                    <span><%= value.speed %></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% for (var i = 0; i < 4; i++) { %>
+                    <% const skillNum = 'tweet' + i; %>
+                    <% const skill = followerObj[key][skillNum] %>
+                    <% const accuracy = (skill.accuracy >= 100) ? 100 : skill.accuracy %>
+                    <div class="skill">
+                        <p><%= skill.tweet %></p>
+                        <p>タイプ: <%= skill.type %></p>
+                        <p>こうげきりょく: <%= skill.attack %></p>
+                        <p>めいちゅうりつ: <%= accuracy %></p>
+                    </div>
+                    <% } %>
+                </div>
+            <% }); %>
+        </div>
+        
+        <!-- わざ選択 -->
+        <% followers.forEach((follower, key) => { %>
+            <div id="<%= follower %>skills" class="skillsContainer">
+                <% for (var i = 0; i < 4; i++) { %>
+                <% const skillNum = 'tweet' + i; %>
+                <% const skill = followerObj[follower][skillNum] %>
+                <% const accuracy = (skill.accuracy >= 100) ? 100 : skill.accuracy %>
+                <div id="<%= follower %>skill<%= i %>" class="skill">
+                    <div class="dammyContainer" data-containertype="skill" data-follower="follower<%= key %>" data-skill="<%= skillNum %>" data-tweet="<%= skill.tweet %>" data-type="<%= skill.type %>" data-attack="<%= skill.attack %>" data-accuracy="<%= accuracy %>" data-speed="<%= followerObj[follower].speed %>"></div>
+                    <p><%= skill.tweet %></p>
+                    <p>タイプ: <%= skill.type %></p>
+                    <p>こうげきりょく: <%= skill.attack %></p>
+                    <p>めいちゅうりつ: <%= accuracy %></p>
+                </div>
+                <% } %>
+            </div>
+        <% }); %>
+
+    </div>
+
+    <!-- 行動決定ボタン -->
+    <button id="enterBtn" class="enterBtn btn" disabled>決定する</button>
+
+    <script src="/socket.io.js"></script>
+    <script>
+        // socket.ioで使う定義値----------------------------------------------
+        var socket = io();
+        var isMerge = false; //相互処理に使う待機状態解除フラグ
+        var priority = null; //行動の優先順位を決定する
+        var followerName = document.getElementById('myName').textContent;
+        var followerImg = document.getElementById('myIcon').getAttribute('src');
+        var followerType = document.getElementById('myType').textContent;
+        var followerHP = document.getElementById('myHP').textContent;
+        var enemyName = document.getElementById('enemyName');
+        var enemyIcon = document.getElementById('enemyIcon');
+        var enemyType = document.getElementById('enemyType');
+        var enemyHP = document.getElementById('enemyHP');
+        var enemyMaxHP = document.getElementById('enemyMaxHP');
+        const roomID = <%= roomID %>;
+        const twitterName = '<%= twitterName %>';
+        // -----------------------------------------------------------------
+        var followerKey = document.getElementById('myFollower').dataset.follower;
+        const eventLog = document.getElementById('eventLog');
+        const selectBtn = document.getElementById('selectBtn');
+        const followersBtn = document.getElementById('followersBtn');
+        const skillsBtn = document.getElementById('skillsBtn');
+        const followersElement = document.getElementById('followers');
+        const actionContainer = document.getElementById('action');
+        const enterBtn = document.getElementById('enterBtn');
+
+        // フォロワーボタンを押したら手持ちのフォロワーを選択する画面を表示非表示切り替えする関数
+        const followersShowToggle = (e) => {
+            const toggledElementID = e.target.parentNode.dataset.follower;
+            const skillsElementID = toggledElementID + 'skills';
+            const skillsElement = document.getElementById(skillsElementID);
+            if (followersElement.classList.contains('followersShowToggle') === true) {
+                enterBtn.style.display = 'none';
+            } else {
+                enterBtn.style.display = 'block';
+            }
+            followersElement.classList.toggle('followersShowToggle');
+            // わざ選択画面が表示中なら非表示にする
+            if (skillsElement.classList.contains('skillsShowToggle') === true) {
+                skillsElement.classList.toggle('skillsShowToggle');
+            }
+        };
+
+        // たたかうボタンを押したらわざを選択する画面を表示非表示切り替えする関数
+        const skillsShowToggle = (e) => {
+            const followerID = e.target.parentNode.dataset.follower;
+            const toggledElementID = followerID + 'skills';
+            const toggledElement = document.getElementById(toggledElementID);
+            if (toggledElement.classList.contains('skillsShowToggle') === true) {
+                enterBtn.style.display = 'none';
+            } else {
+                enterBtn.style.display = 'block';
+            }
+            toggledElement.classList.toggle('skillsShowToggle');
+            // フォロワー選択画面が表示中なら非表示にする
+            if (followersElement.classList.contains('followersShowToggle') === true) {
+                followersElement.classList.toggle('followersShowToggle');
+            }
+        };
+
+        // フォロワーまたはわざを選択した際にフォーカスし、行動決定ボタンに必要なデータセットを渡す関数
+        const selectAction = (e) => {
+            const actionDataset = e.target.dataset;
+            const enterBtnDataset = enterBtn.dataset;
+            const selectedElement = e.target.parentNode;
+            // 意図しない要素をクリックした際の誤作動防止
+            if (selectedElement.classList.contains('skill') || selectedElement.classList.contains('followersContainer')) {
+                const existSelected= document.getElementsByClassName('selected');
+                // 戦闘参加中のフォロワーを選択したなら決定ボタンをアクティブにしない
+                if (actionDataset.containertype === 'follower' && followerKey === actionDataset.follower) {
+                    enterBtn.style.opacity = 0.2;
+                    enterBtn.disabled = true;
+                } else {
+                    enterBtn.style.opacity = 1;
+                    enterBtn.disabled = false;
+                }
+                // 選択したフォロワー・わざにフォーカスする
+                if (existSelected.length === 0) {
+                    selectedElement.classList.add('selected');
+                } else {
+                    existSelected[0].classList.remove('selected');
+                    selectedElement.classList.add('selected');
+                }
+                // 行動決定ボタンにデータセットを追加
+                Object.keys(enterBtnDataset).forEach(key => {
+                    delete enterBtnDataset[key];
+                });
+                Object.keys(actionDataset).forEach(key => {
+                    enterBtn.dataset[key] = actionDataset[key];
+                });
+            } else {
+                return
+            }
+        };
+
+        // 対戦部屋の専用ルームを建てる
+        socket.emit('joinMatchRoom', {
+            twitterName,
+            roomID,
+            followerName,
+            followerImg,
+            followerType,
+            followerHP
+        });
+
+        // ルーム入室後に相手のフォロワー情報を取得
+        socket.on('setEnemyFollower', data => {
+            if (isMerge === false) {
+                document.getElementById('enemyFollower').style.opacity = 1;
+                selectBtn.style.opacity = 1;
+                followersBtn.disabled = false;
+                skillsBtn.disabled = false;
+                enemyName.textContent = data.enemyName;
+                enemyIcon.setAttribute('src', data.enemyImg);
+                enemyType.textContent = data.enemyType;
+                enemyHP.textContent = data.enemyHP;
+                enemyMaxHP.textContent = data.enemyHP;
+                eventLog.innerHTML = data.twitterName + 'が勝負を仕掛けてきた!<br>' + data.twitterName + 'は' + data.enemyName + 'をくりだした!';
+                isMerge = true;
+                socket.emit('sendMyFollower', {
+                    twitterName,
+                    roomID,
+                    followerName,
+                    followerImg,
+                    followerType,
+                    followerHP
+                });
+            } else if (isMerge === true) {
+                isMerge = false;
+                socket.emit('changeIsMerge', {
+                    roomID
+                });
+            }
+        });
+
+        // 待機状態解除時のループを回避する処理
+        socket.on('loopStop', () => {
+            console.log('動作してるで');
+            isMerge = false;
+        });
+
+        // 行動決定ボタンを押下した時に発火する関数
+        const enterAction = (e) => {
+            const enterBtnDataset = enterBtn.dataset;
+            socket.emit('waiting', {
+                dataset: enterBtnDataset,
+                roomID
+            });
+        };
+
+        // 互いの行動が確定した際の処理
+        socket.on('actionStart', data => {
+            const myDataset = enterBtn.dataset;
+            const enemyDataset = data.dataset;
+            if (isMerge === false) {
+                isMerge = true;
+                socket.emit('waiting', {
+                    roomID,
+                    dataset: myDataset
+                });
+            } else if (isMerge === true) {
+                console.log(myDataset);
+                console.log(enemyDataset);
+                // 互いの行動がフォロワー入れ替えかこうげきか判別して行動の優先順位をつける
+                if (myDataset.containertype === 'follower') {
+                    if (enemyDataset.containertype === 'follower') {
+                        priority = (Number(myDataset.hp) > Number(enemyDataset.hp)) ? true : false;
+                        if (priority === true) {
+
+                        } else {
+
+                        }
+                    } else if (enemyDataset.containertype === 'skill') {
+                        priority = true;
+                        //自分：フォロワー、敵：こうげきの処理を以下に記述
+
+                    }
+                } else if (myDataset.containertype === 'skill') {
+                    if (enemyDataset.containertype === 'follower') {
+                        priority = false;
+                        //自分：こうげき、敵：フォロワーの処理を以下に記述
+
+                    } else if (enemyDataset.containertype === 'skill') {
+                        priority = (Number(myDataset.speed) > Number(enemyDataset.speed)) ? true : false;
+                        if (priority === true) {
+
+                        } else {
+
+                        }
+                    }
+                }
+                // isMerge = false;
+                // socket.emit('changeIsMerge', {
+                //     roomID
+                // });
+            }
+        });
+
+        // 待機中メッセージ表示
+        socket.on('waitingMessage', () => {
+            eventLog.textContent = '相手の操作を待機中...';
+            enterBtn.disabled = true;
+                enterBtn.style.opacity = 0.2;
+        });
+
+        // クリックイベント
+        followersBtn.addEventListener('click', followersShowToggle, false);
+        skillsBtn.addEventListener('click', skillsShowToggle, false);
+        actionContainer.addEventListener('click', selectAction, false);
+        enterBtn.addEventListener('click', enterAction, false);
+
+    </script>
+
+  </body>
+</html>

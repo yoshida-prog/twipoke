@@ -124,6 +124,86 @@ io.sockets.on('connection', (socket) => {
     }
   });
 
+  // 対戦部屋合流処理-----------------------------------------------
+  socket.on('joinMatchRoom', async (data) => {
+    socket.join(data.roomID);
+    const myID = socket.id;
+    const allID = await io.in(data.roomID).allSockets();
+    if (allID.size === 2) {
+      for (const id of allID) {
+        if (id != myID) {
+          io.to(id).emit('setEnemyFollower', {
+            twitterName: data.twitterName,
+            enemyName: data.followerName,
+            enemyImg: data.followerImg,
+            enemyType: data.followerType,
+            enemyHP: data.followerHP
+          });
+        }
+      }
+    };
+  });
+
+  socket.on('sendMyFollower', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('setEnemyFollower', {
+          twitterName: data.twitterName,
+          enemyName: data.followerName,
+          enemyImg: data.followerImg,
+          enemyType: data.followerType,
+          enemyHP: data.followerHP
+        });
+      }
+    }
+  });
+  // -------------------------------------------------------------
+
+  // 待機状態を解除して、相互処理のループを回避する処理
+  socket.on('changeIsMerge', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('loopStop');
+      }
+    }
+  });
+
+  // 相手の行動決定を待機する処理
+  socket.on('waiting', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    socket.isStartAction = true;
+    for (const id of allID) {
+      if (id != socket.id) {
+        const isStartAction = socket.to(data.roomID).adapter.nsp.sockets.get(id).isStartAction;
+        if (isStartAction === true) {
+          io.to(id).emit('actionStart', {
+            dataset: data.dataset
+          });
+        } else {
+          io.to(socket.id).emit('waitingMessage');
+        }
+      }
+    }
+  });
+
+  socket.on('waitingResponse', async (data) => {
+    socket.waitingFlg = data.waitingFlg;
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        const waitingFlg = socket.to(data.roomID).adapter.nsp.sockets.get(id).waitingFlg;
+        if (waitingFlg === true) {
+          io.to(id).emit('startMatchPreparation');
+          io.to(socket.id).emit('startMatchPreparation');
+        } else {
+          io.to(socket.id).emit('waitingEnemy');
+        }
+      }
+    }
+  });
+
 });
 
 /**
