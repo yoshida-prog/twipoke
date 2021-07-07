@@ -7,43 +7,45 @@
   </head>
   <body>
 
-    <!-- 戦闘画面 -->
-    <div id="battleScreen" class="battleScreenContainer">
-        <div id="enemyFollower" class="enemyFollowerContainer">
-            <div class="enemyFollowerInfo">
-                <p id="enemyName"></p>
-                <div class="hpAndTypeContent">
-                    <div class="hpGauge"><span>HP</span><div id="enemyHPGauge" class="enemyGauge"></div></div>
-                    <p class="typeContent"><span id="enemyType"></span><span id="enemyHP"></span>/<span id="enemyMaxHP"></span></p>
+    <div id="fixedScreen" class="fixedScreen">
+        <!-- 戦闘画面 -->
+        <div id="battleScreen" class="battleScreenContainer">
+            <div id="enemyFollower" class="enemyFollowerContainer">
+                <div class="enemyFollowerInfo">
+                    <p id="enemyName"></p>
+                    <div class="hpAndTypeContent">
+                        <div class="hpGauge"><span>HP</span><div id="enemyHPGauge" class="enemyGauge"></div></div>
+                        <p class="typeContent"><span id="enemyType"></span><span id="enemyHP"></span>/<span id="enemyMaxHP"></span></p>
+                    </div>
+                </div>
+                <div class="followerIconContainer">
+                    <img id="enemyIcon" class="followerIcon">
+                    <div class="ground"></div>
                 </div>
             </div>
-            <div class="followerIconContainer">
-                <img id="enemyIcon" class="followerIcon">
-                <div class="ground"></div>
-            </div>
-        </div>
-        <div id="myFollower" class="followerContainer" data-follower="<%= followers[0] %>">
-            <div class="followerIconContainer">
-                <img id="myIcon" class="followerIcon" src="<%= followerObj[followers[0]].image %>">
-                <div class="ground"></div>
-            </div>
-            <div class="myFollowerInfo">
-                <p id="myName"><%= followerObj[followers[0]].name %></p>
-                <div class="hpAndTypeContent">
-                    <div class="hpGauge"><span>HP</span><div id="myHPGauge" class="myGauge"></div></div>
-                    <p class="typeContent"><span id="myType"><%= followerObj[followers[0]].followerType %></span><span id="myHP"><%= followerObj[followers[0]].hp %></span>/<span id="myMaxHP"><%= followerObj[followers[0]].hp %></span></p>
+            <div id="myFollower" class="followerContainer" data-follower="<%= followers[0] %>">
+                <div class="followerIconContainer">
+                    <img id="myIcon" class="followerIcon" src="<%= followerObj[followers[0]].image %>">
+                    <div class="ground"></div>
+                </div>
+                <div class="myFollowerInfo">
+                    <p id="myName"><%= followerObj[followers[0]].name %></p>
+                    <div class="hpAndTypeContent">
+                        <div class="hpGauge"><span>HP</span><div id="myHPGauge" class="myGauge"></div></div>
+                        <p class="typeContent"><span id="myType"><%= followerObj[followers[0]].followerType %></span><span id="myHP"><%= followerObj[followers[0]].hp %></span>/<span id="myMaxHP"><%= followerObj[followers[0]].hp %></span></p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- イベントログ -->
-    <div id="eventLog" class="eventLogContent">対戦相手の入室を待機中...</div>
+        <!-- イベントログ -->
+        <div id="eventLog" class="eventLogContent">対戦相手の入室を待機中...</div>
 
-    <!-- 行動選択ボタン -->
-    <div id="selectBtn" class="selectActionContainer" data-follower="<%= followers[0] %>">
-        <button id="followersBtn" class="followerSelectBtn btn" disabled>フォロワー</button>
-        <button id="skillsBtn" class="skillSelectBtn btn" disabled>たたかう</button>
+        <!-- 行動選択ボタン -->
+        <div id="selectBtn" class="selectActionContainer" data-follower="<%= followers[0] %>">
+            <button id="followersBtn" class="followerSelectBtn btn" disabled>フォロワー</button>
+            <button id="skillsBtn" class="skillSelectBtn btn" disabled>たたかう</button>
+        </div>
     </div>
 
     <div id="action" class="actionContainer">
@@ -51,7 +53,7 @@
         <div id="followers" class="followers">
             <% Object.keys(followerObj).forEach((key, index) => { %>
                 <div id="follower<%= index %>" class="followersContainer">
-                    <div class="dammyContainer" data-containertype="follower" data-follower="<%= key %>" data-type="<%= followerObj[key].followerType %>" data-maxhp="<%= followerObj[key].hp %>" data-hp="<%= followerObj[key].hp %>"></div>
+                    <div class="dammyContainer" data-containertype="follower" data-follower="<%= key %>" data-name="<%= followerObj[key].name %>" data-image="<%= followerObj[key].image %>" data-type="<%= followerObj[key].followerType %>" data-maxhp="<%= followerObj[key].hp %>" data-hp="<%= followerObj[key].hp %>"></div>
                     <% const value = followerObj[key] %>
                     <div class="followerStatusContainer">
                         <img src="<%= value.image %>">
@@ -124,26 +126,40 @@
         var socket = io();
         var isMerge = false; //相互処理に使う待機状態解除フラグ
         var priority = null; //行動の優先順位を決定する
-        var followerName = document.getElementById('myName').textContent;
-        var followerImg = document.getElementById('myIcon').getAttribute('src');
-        var followerType = document.getElementById('myType').textContent;
-        var followerHP = document.getElementById('myHP').textContent;
-        var enemyName = document.getElementById('enemyName');
-        var enemyIcon = document.getElementById('enemyIcon');
-        var enemyType = document.getElementById('enemyType');
-        var enemyHP = document.getElementById('enemyHP');
-        var enemyMaxHP = document.getElementById('enemyMaxHP');
         const roomID = <%= roomID %>;
         const twitterName = '<%= twitterName %>';
         // -----------------------------------------------------------------
-        var followerKey = document.getElementById('myFollower').dataset.follower;
+        const myName = document.getElementById('myName');
+        const myIcon = document.getElementById('myIcon');
+        const myType = document.getElementById('myType');
+        const myHP = document.getElementById('myHP');
+        const myMaxHP = document.getElementById('myMaxHP');
+        const followerName = myName.textContent;
+        const followerImg = myIcon.getAttribute('src');
+        const followerType = myType.textContent;
+        const followerHP = myHP.textContent;
+        const followerMaxHP = myMaxHP.textContent;
+        const enemyName = document.getElementById('enemyName');
+        const enemyIcon = document.getElementById('enemyIcon');
+        const enemyType = document.getElementById('enemyType');
+        const enemyHP = document.getElementById('enemyHP');
+        const enemyMaxHP = document.getElementById('enemyMaxHP');
+        // -----------------------------------------------------------------
+        const fixedScreen = document.getElementById('fixedScreen');
         const eventLog = document.getElementById('eventLog');
         const selectBtn = document.getElementById('selectBtn');
         const followersBtn = document.getElementById('followersBtn');
         const skillsBtn = document.getElementById('skillsBtn');
-        const followersElement = document.getElementById('followers');
         const actionContainer = document.getElementById('action');
+        const followersElement = document.getElementById('followers');
         const enterBtn = document.getElementById('enterBtn');
+        const myFollower = document.getElementById('myFollower');
+        var followerKey = myFollower.dataset.follower;
+
+        // setTimeOut
+        const setTimeOut = async () => {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+        };
 
         // フォロワーボタンを押したら手持ちのフォロワーを選択する画面を表示非表示切り替えする関数
         const followersShowToggle = (e) => {
@@ -156,6 +172,7 @@
                 enterBtn.style.display = 'block';
             }
             followersElement.classList.toggle('followersShowToggle');
+            actionContainer.style.marginTop = window.getComputedStyle(fixedScreen).getPropertyValue('height');
             // わざ選択画面が表示中なら非表示にする
             if (skillsElement.classList.contains('skillsShowToggle') === true) {
                 skillsElement.classList.toggle('skillsShowToggle');
@@ -173,6 +190,7 @@
                 enterBtn.style.display = 'block';
             }
             toggledElement.classList.toggle('skillsShowToggle');
+            actionContainer.style.marginTop = window.getComputedStyle(fixedScreen).getPropertyValue('height');
             // フォロワー選択画面が表示中なら非表示にする
             if (followersElement.classList.contains('followersShowToggle') === true) {
                 followersElement.classList.toggle('followersShowToggle');
@@ -189,10 +207,10 @@
                 const existSelected= document.getElementsByClassName('selected');
                 // 戦闘参加中のフォロワーを選択したなら決定ボタンをアクティブにしない
                 if (actionDataset.containertype === 'follower' && followerKey === actionDataset.follower) {
-                    enterBtn.style.opacity = 0.2;
+                    enterBtn.style.backgroundColor = '#a8a8a8';
                     enterBtn.disabled = true;
                 } else {
-                    enterBtn.style.opacity = 1;
+                    enterBtn.style.backgroundColor = '#2f2f2f'
                     enterBtn.disabled = false;
                 }
                 // 選択したフォロワー・わざにフォーカスする
@@ -225,12 +243,9 @@
         });
 
         // ルーム入室後に相手のフォロワー情報を取得
-        socket.on('setEnemyFollower', data => {
+        socket.on('setEnemyFollower', async (data) => {
             if (isMerge === false) {
                 document.getElementById('enemyFollower').style.opacity = 1;
-                selectBtn.style.opacity = 1;
-                followersBtn.disabled = false;
-                skillsBtn.disabled = false;
                 enemyName.textContent = data.enemyName;
                 enemyIcon.setAttribute('src', data.enemyImg);
                 enemyType.textContent = data.enemyType;
@@ -248,6 +263,11 @@
                 });
             } else if (isMerge === true) {
                 isMerge = false;
+                await setTimeOut();
+                selectBtn.style.opacity = 1;
+                followersBtn.disabled = false;
+                skillsBtn.disabled = false;
+                eventLog.innerHTML = twitterName + 'はどうする?';
                 socket.emit('changeIsMerge', {
                     roomID
                 });
@@ -256,13 +276,29 @@
 
         // 待機状態解除時のループを回避する処理
         socket.on('loopStop', () => {
-            console.log('動作してるで');
             isMerge = false;
+            selectBtn.style.opacity = 1;
+            followersBtn.disabled = false;
+            skillsBtn.disabled = false;
+            eventLog.innerHTML = twitterName + 'はどうする?';
         });
 
         // 行動決定ボタンを押下した時に発火する関数
         const enterAction = (e) => {
             const enterBtnDataset = enterBtn.dataset;
+            const selected = document.getElementsByClassName('selected');
+            const skillsToggle = document.getElementsByClassName('skillsShowToggle');
+            const followersToggle = document.getElementsByClassName('followersShowToggle');
+            skillsToggle.length ? skillsToggle[0].classList.remove('skillsShowToggle') : followersToggle[0].classList.remove('followersShowToggle');
+            selected[0].classList.remove('selected');
+            enterBtn.disabled = true;
+            enterBtn.style.backgroundColor = '#a8a8a8';
+            enterBtn.style.display = 'none';
+            selectBtn.style.opacity = 0.2;
+            followersBtn.disabled = true;
+            skillsBtn.disabled = true;
+            isMerge = false;
+            eventLog.textContent = '相手の操作を待機中...';
             socket.emit('waiting', {
                 dataset: enterBtnDataset,
                 roomID
@@ -270,58 +306,96 @@
         };
 
         // 互いの行動が確定した際の処理
-        socket.on('actionStart', data => {
+        const changeMyFollower = (name, icon, type, hp, maxhp, follower) => {
+            myName.textContent = name;
+            myIcon.setAttribute('src', icon);
+            myType.textContent = type;
+            myHP.textContent = hp;
+            myMaxHP.textContent = maxhp;
+            myFollower.dataset.follower = follower;
+            followerKey = follower;
+            selectBtn.dataset.follower = follower;
+        };
+        const changeEnemyFollower = (name, icon, type, hp, maxhp) => {
+            enemyName.textContent = name;
+            enemyIcon.setAttribute('src', icon);
+            enemyType.textContent = type;
+            enemyHP.textContent = hp;
+            enemyMaxHP.textContent = maxhp;
+        };
+        socket.on('actionStart', async (data) => {
             const myDataset = enterBtn.dataset;
             const enemyDataset = data.dataset;
-            if (isMerge === false) {
-                isMerge = true;
-                socket.emit('waiting', {
-                    roomID,
-                    dataset: myDataset
-                });
-            } else if (isMerge === true) {
-                console.log(myDataset);
-                console.log(enemyDataset);
-                // 互いの行動がフォロワー入れ替えかこうげきか判別して行動の優先順位をつける
-                if (myDataset.containertype === 'follower') {
-                    if (enemyDataset.containertype === 'follower') {
-                        priority = (Number(myDataset.hp) > Number(enemyDataset.hp)) ? true : false;
-                        if (priority === true) {
-
-                        } else {
-
-                        }
-                    } else if (enemyDataset.containertype === 'skill') {
-                        priority = true;
-                        //自分：フォロワー、敵：こうげきの処理を以下に記述
-
+            console.log('mydataset: ', myDataset);
+            console.log('enemydataset: ', enemyDataset);
+            // 互いの行動がフォロワー入れ替えかこうげきか判別して行動の優先順位をつける
+            if (myDataset.containertype === 'follower') {
+                if (enemyDataset.containertype === 'follower') {
+                    priority = (Number(myDataset.hp) > Number(enemyDataset.hp)) ? true : false;
+                    if (priority === true) {
+                        console.log('follower:follower -> 先攻');
+                        changeMyFollower(myDataset.name, myDataset.image, myDataset.type, myDataset.hp, myDataset.maxhp, myDataset.follower);
+                        eventLog.innerHTML = myName.textContent + 'を戻した!<br>いけ! ' + myDataset.name + '!';
+                        await setTimeOut();
+                        changeEnemyFollower(enemyDataset.name, enemyDataset.image, enemyDataset.type, enemyDataset.hp, enemyDataset.maxhp);
+                        eventLog.innerHTML = '相手は' + enemyName.textContent + 'を戻して<br>' + enemyDataset.name + 'をくりだした!';
+                        await setTimeOut();
+                        socket.emit('checkProcessed', {
+                            myDataset,
+                            roomID
+                        });
+                    } else {
+                        console.log('follower:follower -> 後攻');
+                        changeEnemyFollower(enemyDataset.name, enemyDataset.image, enemyDataset.type, enemyDataset.hp, enemyDataset.maxhp);
+                        eventLog.innerHTML = '相手は' + enemyName.textContent + 'を戻して<br>' + enemyDataset.name + 'をくりだした!';
+                        await setTimeOut();
+                        changeMyFollower(myDataset.name, myDataset.image, myDataset.type, myDataset.hp, myDataset.maxhp, myDataset.follower);
+                        eventLog.innerHTML = myName.textContent + 'を戻した!<br>いけ! ' + myDataset.name + '!';
+                        await setTimeOut();
+                        socket.emit('checkProcessed', {
+                            myDataset,
+                            roomID
+                        });
                     }
-                } else if (myDataset.containertype === 'skill') {
-                    if (enemyDataset.containertype === 'follower') {
-                        priority = false;
-                        //自分：こうげき、敵：フォロワーの処理を以下に記述
+                } else if (enemyDataset.containertype === 'skill') {
+                    console.log('follower:skill -> 先攻');
+                    changeMyFollower(myDataset.name, myDataset.image, myDataset.type, myDataset.hp, myDataset.maxhp, myDataset.follower);
+                    await setTimeOut();
+                    
+                }
+            } else if (myDataset.containertype === 'skill') {
+                if (enemyDataset.containertype === 'follower') {
+                    console.log('skill:follower -> 後攻');
+                    changeEnemyFollower(enemyDataset.name, enemyDataset.image, enemyDataset.type, enemyDataset.hp, enemyDataset.maxhp);
+                    await setTimeOut();
 
-                    } else if (enemyDataset.containertype === 'skill') {
-                        priority = (Number(myDataset.speed) > Number(enemyDataset.speed)) ? true : false;
-                        if (priority === true) {
-
-                        } else {
-
-                        }
+                } else if (enemyDataset.containertype === 'skill') {
+                    priority = (Number(myDataset.speed) > Number(enemyDataset.speed)) ? true : false;
+                    if (priority === true) {
+                        console.log(priority);
+                    } else {
+                        console.log(priority);
                     }
                 }
-                // isMerge = false;
-                // socket.emit('changeIsMerge', {
-                //     roomID
-                // });
             }
         });
 
-        // 待機中メッセージ表示
-        socket.on('waitingMessage', () => {
-            eventLog.textContent = '相手の操作を待機中...';
-            enterBtn.disabled = true;
-                enterBtn.style.opacity = 0.2;
+        // 1ターンの最後の処理、ループ解除
+        socket.on('actionEnd', async () => {
+            if (isMerge === true) {
+                console.log('1ターン終わり');
+                eventLog.innerHTML = twitterName + 'はどうする?';
+                return
+            } else {
+                isMerge = true;
+                selectBtn.style.opacity = 1;
+                followersBtn.disabled = false;
+                skillsBtn.disabled = false;
+                eventLog.innerHTML = twitterName + 'はどうする?';
+                socket.emit('enemyActionEnd', {
+                    roomID
+                });
+            }
         });
 
         // クリックイベント

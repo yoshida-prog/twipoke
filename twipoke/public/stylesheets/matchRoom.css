@@ -11,6 +11,16 @@ p {
     margin: 0;
 }
 
+.fixedScreen {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: #fbf0e4;
+    z-index: 20;
+}
+
 .battleScreenContainer {
     display: flex;
     flex-direction: column;
@@ -138,6 +148,10 @@ p.typeContent {
     color: #2F2F2F;
 }
 
+.actionContainer {
+    margin-bottom: 42px;
+}
+
 /* わざ選択画面 */
 .skillsContainer {
     display: none;
@@ -225,10 +239,12 @@ p.typeContent {
 .enterBtn {
     display: none;
     width: 100%;
-    background-color: #2F2F2F;
+    background-color: #a8a8a8;
     color: #fafafa;
-    opacity: 0.2;
     box-sizing: border-box;
+    position: fixed;
+    bottom: 0;
+    z-index: 20;
 }
 
 /* toggle */
