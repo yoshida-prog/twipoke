@@ -14,7 +14,7 @@
                 <div class="enemyFollowerInfo">
                     <p id="enemyName"></p>
                     <div class="hpAndTypeContent">
-                        <div class="hpGauge"><span>HP</span><div id="enemyHPGauge" class="enemyGauge"></div></div>
+                        <div class="hpGauge"><span>HP</span><div id="enemyHPGauge" class="enemyGauge"><div id="remainingEnemyHP" class="remainingEnemyHP"></div></div></div>
                         <p class="typeContent"><span id="enemyType"></span><span id="enemyHP"></span>/<span id="enemyMaxHP"></span></p>
                     </div>
                 </div>
@@ -23,7 +23,7 @@
                     <div class="ground"></div>
                 </div>
             </div>
-            <div id="myFollower" class="followerContainer" data-follower="<%= followers[0] %>">
+            <div id="myFollower" class="followerContainer" data-follower="<%= followers[0] %>" data-followerattack="<%= followerObj[followers[0]].attack %>" data-followerdefense="<%= followerObj[followers[0]].defense %>">
                 <div class="followerIconContainer">
                     <img id="myIcon" class="followerIcon" src="<%= followerObj[followers[0]].image %>">
                     <div class="ground"></div>
@@ -31,7 +31,7 @@
                 <div class="myFollowerInfo">
                     <p id="myName"><%= followerObj[followers[0]].name %></p>
                     <div class="hpAndTypeContent">
-                        <div class="hpGauge"><span>HP</span><div id="myHPGauge" class="myGauge"></div></div>
+                        <div class="hpGauge"><span>HP</span><div id="myHPGauge" class="myGauge"><div id="remainingMyHP" class="remainingMyHP"></div></div></div>
                         <p class="typeContent"><span id="myType"><%= followerObj[followers[0]].followerType %></span><span id="myHP"><%= followerObj[followers[0]].hp %></span>/<span id="myMaxHP"><%= followerObj[followers[0]].hp %></span></p>
                     </div>
                 </div>
@@ -53,7 +53,7 @@
         <div id="followers" class="followers">
             <% Object.keys(followerObj).forEach((key, index) => { %>
                 <div id="follower<%= index %>" class="followersContainer">
-                    <div class="dammyContainer" data-containertype="follower" data-follower="<%= key %>" data-name="<%= followerObj[key].name %>" data-image="<%= followerObj[key].image %>" data-type="<%= followerObj[key].followerType %>" data-maxhp="<%= followerObj[key].hp %>" data-hp="<%= followerObj[key].hp %>"></div>
+                    <div class="dammyContainer" data-containertype="follower" data-follower="<%= key %>" data-name="<%= followerObj[key].name %>" data-image="<%= followerObj[key].image %>" data-type="<%= followerObj[key].followerType %>" data-maxhp="<%= followerObj[key].hp %>" data-hp="<%= followerObj[key].hp %>" data-attack="<%= followerObj[key].attack %>" data-defense="<%= followerObj[key].defense %>"></div>
                     <% const value = followerObj[key] %>
                     <div class="followerStatusContainer">
                         <img src="<%= value.image %>">
@@ -105,7 +105,7 @@
                 <% const skill = followerObj[follower][skillNum] %>
                 <% const accuracy = (skill.accuracy >= 100) ? 100 : skill.accuracy %>
                 <div id="<%= follower %>skill<%= i %>" class="skill">
-                    <div class="dammyContainer" data-containertype="skill" data-follower="follower<%= key %>" data-skill="<%= skillNum %>" data-tweet="<%= skill.tweet %>" data-type="<%= skill.type %>" data-attack="<%= skill.attack %>" data-accuracy="<%= accuracy %>" data-speed="<%= followerObj[follower].speed %>"></div>
+                    <div class="dammyContainer" data-containertype="skill" data-follower="follower<%= key %>" data-followerattack="<%= followerObj[follower].attack %>" data-skill="<%= skillNum %>" data-tweet="<%= skill.tweet %>" data-type="<%= skill.type %>" data-attack="<%= skill.attack %>" data-accuracy="<%= accuracy %>" data-speed="<%= followerObj[follower].speed %>"></div>
                     <p><%= skill.tweet %></p>
                     <p>タイプ: <%= skill.type %></p>
                     <p>こうげきりょく: <%= skill.attack %></p>
@@ -129,11 +129,27 @@
         const roomID = <%= roomID %>;
         const twitterName = '<%= twitterName %>';
         // -----------------------------------------------------------------
+        const weakTypeCompatibility = { // keyが攻撃側、valueが受け側
+            fire: 'grass',
+            water: 'fire',
+            electric: 'water',
+            grass: 'water',
+            twi: 'normal'
+        };
+        const strongTypeCompatibility = {
+            fire: 'water',
+            water: 'grass',
+            electric: 'grass',
+            grass: 'fire',
+            twi: 'twi'
+        };
         const myName = document.getElementById('myName');
         const myIcon = document.getElementById('myIcon');
         const myType = document.getElementById('myType');
         const myHP = document.getElementById('myHP');
         const myMaxHP = document.getElementById('myMaxHP');
+        const myHPGauge = document.getElementById('myHPGauge');
+        const remainingMyHP = document.getElementById('remainingMyHP');
         const followerName = myName.textContent;
         const followerImg = myIcon.getAttribute('src');
         const followerType = myType.textContent;
@@ -144,6 +160,8 @@
         const enemyType = document.getElementById('enemyType');
         const enemyHP = document.getElementById('enemyHP');
         const enemyMaxHP = document.getElementById('enemyMaxHP');
+        const enemyHPGauge = document.getElementById('enemyHPGauge');
+        const remainingEnemyHP = document.getElementById('remainingEnemyHP');
         // -----------------------------------------------------------------
         const fixedScreen = document.getElementById('fixedScreen');
         const eventLog = document.getElementById('eventLog');
@@ -154,6 +172,7 @@
         const followersElement = document.getElementById('followers');
         const enterBtn = document.getElementById('enterBtn');
         const myFollower = document.getElementById('myFollower');
+        const enemyFollower = document.getElementById('enemyFollower');
         var followerKey = myFollower.dataset.follower;
 
         // setTimeOut
@@ -239,7 +258,9 @@
             followerName,
             followerImg,
             followerType,
-            followerHP
+            followerHP,
+            followerAttack: myFollower.dataset.followerattack,
+            followerDefense: myFollower.dataset.followerdefense
         });
 
         // ルーム入室後に相手のフォロワー情報を取得
@@ -251,6 +272,8 @@
                 enemyType.textContent = data.enemyType;
                 enemyHP.textContent = data.enemyHP;
                 enemyMaxHP.textContent = data.enemyHP;
+                enemyFollower.dataset.enemyattack = data.enemyAttack;
+                enemyFollower.dataset.enemydefense = data.enemyDefense;
                 eventLog.innerHTML = data.twitterName + 'が勝負を仕掛けてきた!<br>' + data.twitterName + 'は' + data.enemyName + 'をくりだした!';
                 isMerge = true;
                 socket.emit('sendMyFollower', {
@@ -259,7 +282,9 @@
                     followerName,
                     followerImg,
                     followerType,
-                    followerHP
+                    followerHP,
+                    followerAttack: myFollower.dataset.followerattack,
+                    followerDefense: myFollower.dataset.followerdefense
                 });
             } else if (isMerge === true) {
                 isMerge = false;
@@ -305,24 +330,99 @@
             });
         };
 
-        // 互いの行動が確定した際の処理
-        const changeMyFollower = (name, icon, type, hp, maxhp, follower) => {
+        // 互いの行動が確定した際の処理------------------------------------------------------------------------------------------------------------------
+        // 自分・相手のフォロワー交換処理関数
+        const changeMyFollower = async (name, icon, type, hp, maxhp, follower, attack, defense) => {
             myName.textContent = name;
             myIcon.setAttribute('src', icon);
             myType.textContent = type;
             myHP.textContent = hp;
             myMaxHP.textContent = maxhp;
             myFollower.dataset.follower = follower;
+            myFollower.dataset.followerattack = attack;
+            myFollower.dataset.followerdefense = defense;
             followerKey = follower;
             selectBtn.dataset.follower = follower;
+            eventLog.innerHTML = myName.textContent + 'を戻した!<br>いけ! ' + name + '!';
+            await setTimeOut();
         };
-        const changeEnemyFollower = (name, icon, type, hp, maxhp) => {
+        const changeEnemyFollower = async (name, icon, type, hp, maxhp, attack, defense) => {
             enemyName.textContent = name;
             enemyIcon.setAttribute('src', icon);
             enemyType.textContent = type;
             enemyHP.textContent = hp;
             enemyMaxHP.textContent = maxhp;
+            enemyFollower.dataset.enemyattack = attack;
+            enemyFollower.dataset.enemydefense = defense;
+            eventLog.innerHTML = '相手は' + enemyName.textContent + 'を戻して<br>' + name + 'をくりだした!';
+            await setTimeOut();
         };
+        
+        // 命中処理関数
+        const hit = (accuracy) => {
+            const accuracyNum = Number(accuracy);
+            const hitRate = Math.floor(Math.random() * (101 - 1)) + 1;
+            if (hitRate <= accuracyNum) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+        // こうげきが当たらなかった場合のイベントログ
+        const missLog = async (name) => {
+            eventLog.innerHTML = name + 'のこうげき!';
+            await setTimeOut();
+            eventLog.innerHTML = 'しかし ' + name + ' のこうげきは外れてしまった!';
+        };
+        // ダメージ計算関数
+        const damageCalculation = (followerAttack, skillAttack, enemyDefense, isSameType, weakType) => {
+            const randomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
+            const damage = Math.floor( (12 * followerAttack * skillAttack * isSameType * weakType * randomNum) / (enemyDefense * 50) );
+            return damage;
+        };
+        // タイプ相性確認関数
+        const attackDamage = async (attackerName, attackerType, defenderType, attackerAttack, defenderDefense, tweet, skilltype, skillattack) => {
+            const isSameType = (attackerType === skilltype) ? 1.5 : 1;
+            const weakType = () => {
+                const weakTypeCompatibilityKeys = Object.keys(weakTypeCompatibility);
+                const strongTypeCompatibilityKeys = Object.keys(strongTypeCompatibility);
+                for (const key of weakTypeCompatibilityKeys) {
+                    if (key === skilltype && weakTypeCompatibility[key] === defenderType) {
+                        return 2;
+                    }
+                };
+                for (const key of strongTypeCompatibilityKeys) {
+                    if (key === skilltype && strongTypeCompatibility[key] === defenderType) {
+                        return 0.5;
+                    }
+                };
+                return 1;
+            };
+            console.log(isSameType, weakType());
+            if (weakType() === 2) {
+                eventLog.innerHTML = attackerName + ' の ' + tweet + ' こうげき!<br>効果は抜群だ!';
+            } else if (weakType() === 0.5) {
+                eventLog.innerHTML = attackerName + ' の ' + tweet + ' こうげき!<br>効果はいまひとつのようだ...';
+            } else {
+                eventLog.innerHTML = attackerName + ' の ' + tweet + ' こうげき!';
+            }
+            const attack = Number(attackerAttack);
+            const defense = Number(defenderDefense);
+            const damage = damageCalculation(attack, Number(skillattack), defense, isSameType, weakType());
+            return damage;
+        };
+
+        // ダメージを画面に反映させる関数
+        const reflectDamage = (damage, hp, maxhp, hpGauge, remainingHP) => {
+            const afterHP = Number(hp.textContent) - damage;
+            hp.textContent = afterHP;
+            const hpGaugeWidth = hpGauge.clientWidth;
+            const remainingHPWidth = remainingHP.clientWidth;
+            const afterHPGaugeWidth = remainingHPWidth - damage * (Number(hpGaugeWidth) / Number(maxhp));
+            remainingHP.style.width = afterHPGaugeWidth + 'px';
+        };
+
+        // 行動開始socket
         socket.on('actionStart', async (data) => {
             const myDataset = enterBtn.dataset;
             const enemyDataset = data.dataset;
@@ -333,25 +433,51 @@
                 if (enemyDataset.containertype === 'follower') {
                     priority = (Number(myDataset.hp) > Number(enemyDataset.hp)) ? true : false;
                     if (priority === true) {
-                        console.log('follower:follower -> 先攻');
-                        changeMyFollower(myDataset.name, myDataset.image, myDataset.type, myDataset.hp, myDataset.maxhp, myDataset.follower);
-                        eventLog.innerHTML = myName.textContent + 'を戻した!<br>いけ! ' + myDataset.name + '!';
-                        await setTimeOut();
-                        changeEnemyFollower(enemyDataset.name, enemyDataset.image, enemyDataset.type, enemyDataset.hp, enemyDataset.maxhp);
-                        eventLog.innerHTML = '相手は' + enemyName.textContent + 'を戻して<br>' + enemyDataset.name + 'をくりだした!';
-                        await setTimeOut();
+                        // 双方フォロワー交換 -> 先攻
+                        await changeMyFollower(
+                            myDataset.name,
+                            myDataset.image,
+                            myDataset.type,
+                            myDataset.hp,
+                            myDataset.maxhp,
+                            myDataset.follower,
+                            myDataset.attack,
+                            myDataset.defense
+                        );
+                        await changeEnemyFollower(
+                            enemyDataset.name,
+                            enemyDataset.image,
+                            enemyDataset.type,
+                            enemyDataset.hp,
+                            enemyDataset.maxhp,
+                            enemyDataset.attack,
+                            enemyDataset.defense
+                        );
                         socket.emit('checkProcessed', {
                             myDataset,
                             roomID
                         });
                     } else {
-                        console.log('follower:follower -> 後攻');
-                        changeEnemyFollower(enemyDataset.name, enemyDataset.image, enemyDataset.type, enemyDataset.hp, enemyDataset.maxhp);
-                        eventLog.innerHTML = '相手は' + enemyName.textContent + 'を戻して<br>' + enemyDataset.name + 'をくりだした!';
-                        await setTimeOut();
-                        changeMyFollower(myDataset.name, myDataset.image, myDataset.type, myDataset.hp, myDataset.maxhp, myDataset.follower);
-                        eventLog.innerHTML = myName.textContent + 'を戻した!<br>いけ! ' + myDataset.name + '!';
-                        await setTimeOut();
+                        // 双方フォロワー交換 -> 後攻
+                        await changeEnemyFollower(
+                            enemyDataset.name,
+                            enemyDataset.image,
+                            enemyDataset.type,
+                            enemyDataset.hp,
+                            enemyDataset.maxhp,
+                            enemyDataset.attack,
+                            enemyDataset.defense
+                        );
+                        await changeMyFollower(
+                            myDataset.name,
+                            myDataset.image,
+                            myDataset.type,
+                            myDataset.hp,
+                            myDataset.maxhp,
+                            myDataset.follower,
+                            myDataset.attack,
+                            myDataset.defense
+                        );
                         socket.emit('checkProcessed', {
                             myDataset,
                             roomID
@@ -359,22 +485,103 @@
                     }
                 } else if (enemyDataset.containertype === 'skill') {
                     console.log('follower:skill -> 先攻');
-                    changeMyFollower(myDataset.name, myDataset.image, myDataset.type, myDataset.hp, myDataset.maxhp, myDataset.follower);
-                    await setTimeOut();
+                    // フォロワー交換：こうげき -> 先攻
+                    await changeMyFollower(
+                        myDataset.name,
+                        myDataset.image,
+                        myDataset.type,
+                        myDataset.hp,
+                        myDataset.maxhp,
+                        myDataset.follower,
+                        myDataset.attack,
+                        myDataset.defense
+                    );
                     
                 }
             } else if (myDataset.containertype === 'skill') {
                 if (enemyDataset.containertype === 'follower') {
                     console.log('skill:follower -> 後攻');
-                    changeEnemyFollower(enemyDataset.name, enemyDataset.image, enemyDataset.type, enemyDataset.hp, enemyDataset.maxhp);
-                    await setTimeOut();
+                    // フォロワー交換：こうげき -> 後攻
+                    await changeEnemyFollower(
+                        enemyDataset.name,
+                        enemyDataset.image,
+                        enemyDataset.type,
+                        enemyDataset.hp,
+                        enemyDataset.maxhp,
+                        enemyDataset.attack,
+                        enemyDataset.defense
+                    );
 
                 } else if (enemyDataset.containertype === 'skill') {
                     priority = (Number(myDataset.speed) > Number(enemyDataset.speed)) ? true : false;
                     if (priority === true) {
-                        console.log(priority);
+                        console.log('skill:skill -> 先攻');
+                        // 双方こうげき -> 先攻
+                        if (hit(myDataset.accuracy) === true) {
+                            const damageDone = await attackDamage(
+                                myName.textContent,
+                                myType.textContent,
+                                enemyType.textContent,
+                                myFollower.dataset.followerattack,
+                                enemyFollower.dataset.enemydefense,
+                                myDataset.tweet,
+                                myDataset.type,
+                                myDataset.attack
+                            );
+                            await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                        } else {
+                            await missLog(myName.textContent);
+                        }
+                        await setTimeOut();
+                        if (hit(enemyDataset.accuracy) === true) {
+                            const damageReceived = await attackDamage(
+                                enemyName.textContent,
+                                enemyType.textContent,
+                                myType.textContent,
+                                enemyFollower.dataset.enemyattack,
+                                myFollower.dataset.followerdefense,
+                                enemyDataset.tweet,
+                                enemyDataset.type,
+                                enemyDataset.attack
+                            );
+                            await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                        } else {
+                            await missLog(enemyName.textContent);
+                        }
                     } else {
-                        console.log(priority);
+                        console.log('skill:skill -> 後攻');
+                        // 双方こうげき -> 後攻
+                        if (hit(enemyDataset.accuracy) === true) {
+                            const damageReceived = await attackDamage(
+                                enemyName.textContent,
+                                enemyType.textContent,
+                                myType.textContent,
+                                enemyFollower.dataset.enemyattack,
+                                myFollower.dataset.followerdefense,
+                                enemyDataset.tweet,
+                                enemyDataset.type,
+                                enemyDataset.attack
+                            );
+                            await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                        } else {
+                            await missLog(enemyName.textContent);
+                        }
+                        await setTimeOut();
+                        if (hit(myDataset.accuracy) === true) {
+                            const damageDone = await attackDamage(
+                                myName.textContent,
+                                myType.textContent,
+                                enemyType.textContent,
+                                myFollower.dataset.followerattack,
+                                enemyFollower.dataset.enemydefense,
+                                myDataset.tweet,
+                                myDataset.type,
+                                myDataset.attack
+                            );
+                            await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                        } else {
+                            await missLog(myName.textContent);
+                        }
                     }
                 }
             }
@@ -384,14 +591,14 @@
         socket.on('actionEnd', async () => {
             if (isMerge === true) {
                 console.log('1ターン終わり');
-                eventLog.innerHTML = twitterName + 'はどうする?';
+                eventLog.innerHTML = twitterName + ' はどうする?';
                 return
             } else {
                 isMerge = true;
                 selectBtn.style.opacity = 1;
                 followersBtn.disabled = false;
                 skillsBtn.disabled = false;
-                eventLog.innerHTML = twitterName + 'はどうする?';
+                eventLog.innerHTML = twitterName + ' はどうする?';
                 socket.emit('enemyActionEnd', {
                     roomID
                 });

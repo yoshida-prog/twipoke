@@ -67,19 +67,26 @@ p {
 .enemyGauge {
     width: 100%;
     height: 16px;
-    background-color: #4acc5f;
     margin-left: 10px;
     border: 1px solid #2f2f2f;
-    border-radius: 8px;
 }
 
 .myGauge {
     width: 100%;
     height: 16px;
-    background-color: #4acc5f;
     margin-left: 10px;
     border: 1px solid #2f2f2f;
-    border-radius: 8px;
+}
+
+.remainingMyHP {
+    width: 100%;
+    height: 16px;
+    background-color: #4acc5f;
+}
+.remainingEnemyHP {
+    width: 100%;
+    height: 16px;
+    background-color: #4acc5f;
 }
 
 .hpGauge {

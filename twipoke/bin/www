@@ -137,7 +137,9 @@ io.sockets.on('connection', (socket) => {
             enemyName: data.followerName,
             enemyImg: data.followerImg,
             enemyType: data.followerType,
-            enemyHP: data.followerHP
+            enemyHP: data.followerHP,
+            enemyAttack: data.followerAttack,
+            enemyDefense: data.followerDefense
           });
         }
       }
@@ -153,7 +155,9 @@ io.sockets.on('connection', (socket) => {
           enemyName: data.followerName,
           enemyImg: data.followerImg,
           enemyType: data.followerType,
-          enemyHP: data.followerHP
+          enemyHP: data.followerHP,
+          enemyAttack: data.followerAttack,
+          enemyDefense: data.followerDefense
         });
       }
     }
