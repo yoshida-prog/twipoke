@@ -52,7 +52,7 @@
         <!-- フォロワー選択 -->
         <div id="followers" class="followers">
             <% Object.keys(followerObj).forEach((key, index) => { %>
-                <div id="follower<%= index %>" class="followersContainer">
+                <div id="<%= key %>" class="followersContainer">
                     <div class="dammyContainer" data-containertype="follower" data-follower="<%= key %>" data-name="<%= followerObj[key].name %>" data-image="<%= followerObj[key].image %>" data-type="<%= followerObj[key].followerType %>" data-maxhp="<%= followerObj[key].hp %>" data-hp="<%= followerObj[key].hp %>" data-attack="<%= followerObj[key].attack %>" data-defense="<%= followerObj[key].defense %>"></div>
                     <% const value = followerObj[key] %>
                     <div class="followerStatusContainer">
@@ -65,7 +65,7 @@
                             <div class="followerStatus">
                                 <div class="status">
                                     <span>HP</span>
-                                    <span><%= value.hp %></span>
+                                    <span id="<%= key %>HP"><%= value.hp %></span>
                                 </div>
                                 <div class="status">
                                     <span>こうげき</span>
@@ -330,9 +330,19 @@
             });
         };
 
+        // 戦闘中フォロワーの現在のHPを「フォロワー」一覧に反映させる関数
+        const currentHP = () => {
+            const currentFollowerNum = myFollower.dataset.follower;
+            const currentFollowerHP = currentFollowerNum + 'HP';
+            const currentFollower = document.getElementById(currentFollowerNum);
+            document.getElementById(currentFollowerHP).textContent = myHP.textContent;
+            currentFollower.firstChild.nextSibling.dataset.hp = myHP.textContent;
+        }
+
         // 互いの行動が確定した際の処理------------------------------------------------------------------------------------------------------------------
         // 自分・相手のフォロワー交換処理関数
         const changeMyFollower = async (name, icon, type, hp, maxhp, follower, attack, defense) => {
+            currentHP();
             myName.textContent = name;
             myIcon.setAttribute('src', icon);
             myType.textContent = type;
@@ -341,6 +351,7 @@
             myFollower.dataset.follower = follower;
             myFollower.dataset.followerattack = attack;
             myFollower.dataset.followerdefense = defense;
+            remainingMyHP.style.width = (myHPGauge.clientWidth * (Number(myHP.textContent) / Number(myMaxHP.textContent))) + 'px';
             followerKey = follower;
             selectBtn.dataset.follower = follower;
             eventLog.innerHTML = myName.textContent + 'を戻した!<br>いけ! ' + name + '!';
@@ -354,6 +365,7 @@
             enemyMaxHP.textContent = maxhp;
             enemyFollower.dataset.enemyattack = attack;
             enemyFollower.dataset.enemydefense = defense;
+            remainingEnemyHP.style.width = (enemyHPGauge.clientWidth * (Number(enemyHP.textContent) / Number(enemyMaxHP.textContent))) + 'px';
             eventLog.innerHTML = '相手は' + enemyName.textContent + 'を戻して<br>' + name + 'をくりだした!';
             await setTimeOut();
         };
@@ -398,7 +410,6 @@
                 };
                 return 1;
             };
-            console.log(isSameType, weakType());
             if (weakType() === 2) {
                 eventLog.innerHTML = attackerName + ' の ' + tweet + ' こうげき!<br>効果は抜群だ!';
             } else if (weakType() === 0.5) {
@@ -406,6 +417,7 @@
             } else {
                 eventLog.innerHTML = attackerName + ' の ' + tweet + ' こうげき!';
             }
+            await setTimeOut();
             const attack = Number(attackerAttack);
             const defense = Number(defenderDefense);
             const damage = damageCalculation(attack, Number(skillattack), defense, isSameType, weakType());
@@ -415,19 +427,41 @@
         // ダメージを画面に反映させる関数
         const reflectDamage = (damage, hp, maxhp, hpGauge, remainingHP) => {
             const afterHP = Number(hp.textContent) - damage;
-            hp.textContent = afterHP;
-            const hpGaugeWidth = hpGauge.clientWidth;
-            const remainingHPWidth = remainingHP.clientWidth;
-            const afterHPGaugeWidth = remainingHPWidth - damage * (Number(hpGaugeWidth) / Number(maxhp));
-            remainingHP.style.width = afterHPGaugeWidth + 'px';
+            if (afterHP <= 0) {
+                hp.textContent = 0;
+                currentHP();
+                remainingHP.style.width = '0px';
+                return false;
+            } else {
+                hp.textContent = afterHP;
+                currentHP();
+                const hpGaugeWidth = hpGauge.clientWidth;
+                const remainingHPWidth = remainingHP.clientWidth;
+                const afterHPGaugeWidth = remainingHPWidth - damage * (Number(hpGaugeWidth) / Number(maxhp));
+                remainingHP.style.width = afterHPGaugeWidth + 'px';
+                return true;
+            }
         };
+
+        // こうげきを受けてHPが0になった時の処理
+        const dying = async (dyingFollower, follower) => {
+            eventLog.innerHTML = dyingFollower + ' は倒れた!';
+            await setTimeOut();
+            follower.style.opacity = 0;
+            await setTimeOut();
+            eventLog.innerHTML = '次に戦わせるフォロワーを選んでください';
+            selectBtn.style.opacity = 0.2;
+            followersBtn.disabled = true;
+            skillsBtn.disabled = true;
+            enterBtn.style.display = 'block';
+            followersElement.classList.toggle('followersShowToggle');
+            actionContainer.style.marginTop = window.getComputedStyle(fixedScreen).getPropertyValue('height');
+        }
 
         // 行動開始socket
         socket.on('actionStart', async (data) => {
             const myDataset = enterBtn.dataset;
             const enemyDataset = data.dataset;
-            console.log('mydataset: ', myDataset);
-            console.log('enemydataset: ', enemyDataset);
             // 互いの行動がフォロワー入れ替えかこうげきか判別して行動の優先順位をつける
             if (myDataset.containertype === 'follower') {
                 if (enemyDataset.containertype === 'follower') {
@@ -496,7 +530,22 @@
                         myDataset.attack,
                         myDataset.defense
                     );
-                    
+                    await setTimeOut();
+                    if (hit(enemyDataset.accuracy) === true) {
+                        const damageReceived = await attackDamage(
+                            enemyName.textContent,
+                            enemyType.textContent,
+                            myType.textContent,
+                            enemyFollower.dataset.enemyattack,
+                            myFollower.dataset.followerdefense,
+                            enemyDataset.tweet,
+                            enemyDataset.type,
+                            enemyDataset.attack
+                        );
+                        await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                    } else {
+                        await missLog(enemyName.textContent);
+                    }
                 }
             } else if (myDataset.containertype === 'skill') {
                 if (enemyDataset.containertype === 'follower') {
@@ -511,7 +560,22 @@
                         enemyDataset.attack,
                         enemyDataset.defense
                     );
-
+                    setTimeOut();
+                    if (hit(myDataset.accuracy) === true) {
+                            const damageDone = await attackDamage(
+                                myName.textContent,
+                                myType.textContent,
+                                enemyType.textContent,
+                                myFollower.dataset.followerattack,
+                                enemyFollower.dataset.enemydefense,
+                                myDataset.tweet,
+                                myDataset.type,
+                                myDataset.attack
+                            );
+                        await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                    } else {
+                        await missLog(myName.textContent);
+                    }
                 } else if (enemyDataset.containertype === 'skill') {
                     priority = (Number(myDataset.speed) > Number(enemyDataset.speed)) ? true : false;
                     if (priority === true) {
@@ -528,7 +592,11 @@
                                 myDataset.type,
                                 myDataset.attack
                             );
-                            await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                            const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                            if (reflect === false) {
+                                // socketでHP0になった側のフォロワー入れ替えへ移行
+                                console.log('HPが0になったよ!');
+                            }
                         } else {
                             await missLog(myName.textContent);
                         }
@@ -544,10 +612,20 @@
                                 enemyDataset.type,
                                 enemyDataset.attack
                             );
-                            await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                            const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                            if (reflect === false) {
+                                // socketでHP0になった側のフォロワー入れ替えへ移行
+                                console.log('HPが0になったよ!');
+                                dying(myName.textContent, myFollower);
+                                return
+                            }
                         } else {
                             await missLog(enemyName.textContent);
                         }
+                        socket.emit('checkProcessed', {
+                            myDataset,
+                            roomID
+                        });
                     } else {
                         console.log('skill:skill -> 後攻');
                         // 双方こうげき -> 後攻
@@ -562,7 +640,13 @@
                                 enemyDataset.type,
                                 enemyDataset.attack
                             );
-                            await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                            const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                            if (reflect === false) {
+                                // socketでHP0になった側のフォロワー入れ替えへ移行
+                                console.log('HPが0になったよ!');
+                                dying(myName.textContent, myFollower);
+                                return
+                            }
                         } else {
                             await missLog(enemyName.textContent);
                         }
@@ -578,10 +662,18 @@
                                 myDataset.type,
                                 myDataset.attack
                             );
-                            await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                            const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                            if (reflect === false) {
+                                // socketでHP0になった側のフォロワー入れ替えへ移行
+                                console.log('HPが0になったよ!');
+                            }
                         } else {
                             await missLog(myName.textContent);
                         }
+                        socket.emit('checkProcessed', {
+                            myDataset,
+                            roomID
+                        });
                     }
                 }
             }
