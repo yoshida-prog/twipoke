@@ -387,13 +387,17 @@
             eventLog.innerHTML = 'しかし ' + name + ' のこうげきは外れてしまった!';
         };
         // ダメージ計算関数
-        const damageCalculation = (followerAttack, skillAttack, enemyDefense, isSameType, weakType) => {
-            const randomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
+        const damageCalculation = (followerAttack, skillAttack, enemyDefense, isSameType, weakType, randomNum) => {
             const damage = Math.floor( (12 * followerAttack * skillAttack * isSameType * weakType * randomNum) / (enemyDefense * 50) );
+            console.log(damage);
+            console.log('followerAttack: ' + followerAttack);
+            console.log('skillAttack: ' + skillAttack);
+            console.log('enemyDefense: ' + enemyDefense);
+            console.log('randomNum: ' + randomNum);
             return damage;
         };
         // タイプ相性確認関数
-        const attackDamage = async (attackerName, attackerType, defenderType, attackerAttack, defenderDefense, tweet, skilltype, skillattack) => {
+        const attackDamage = async (attackerName, attackerType, defenderType, attackerAttack, defenderDefense, tweet, skilltype, skillattack, randomNum) => {
             const isSameType = (attackerType === skilltype) ? 1.5 : 1;
             const weakType = () => {
                 const weakTypeCompatibilityKeys = Object.keys(weakTypeCompatibility);
@@ -420,7 +424,7 @@
             await setTimeOut();
             const attack = Number(attackerAttack);
             const defense = Number(defenderDefense);
-            const damage = damageCalculation(attack, Number(skillattack), defense, isSameType, weakType());
+            const damage = damageCalculation(attack, Number(skillattack), defense, isSameType, weakType(), randomNum);
             return damage;
         };
 
@@ -462,6 +466,9 @@
         socket.on('actionStart', async (data) => {
             const myDataset = enterBtn.dataset;
             const enemyDataset = data.dataset;
+            const alreadyMyHitJudge = data.myHitJudge;
+            const alreadyEnemyHitJudge = data.enemyHitJudge;
+            const damageCalculated = (alreadyMyHitJudge != undefined  || alreadyEnemyHitJudge != undefined) ? true : false;
             // 互いの行動がフォロワー入れ替えかこうげきか判別して行動の優先順位をつける
             if (myDataset.containertype === 'follower') {
                 if (enemyDataset.containertype === 'follower') {
@@ -577,103 +584,234 @@
                         await missLog(myName.textContent);
                     }
                 } else if (enemyDataset.containertype === 'skill') {
-                    priority = (Number(myDataset.speed) > Number(enemyDataset.speed)) ? true : false;
+                    if (data.priority === undefined) {
+                        if (Number(myDataset.speed) >= Number(enemyDataset.speed)) {
+                            priority = true;
+                        } else {
+                            priority = false;
+                        }
+                    } else {
+                        priority = data.priority;
+                        priority = !priority;
+                    }
                     if (priority === true) {
                         console.log('skill:skill -> 先攻');
                         // 双方こうげき -> 先攻
-                        if (hit(myDataset.accuracy) === true) {
-                            const damageDone = await attackDamage(
-                                myName.textContent,
-                                myType.textContent,
-                                enemyType.textContent,
-                                myFollower.dataset.followerattack,
-                                enemyFollower.dataset.enemydefense,
-                                myDataset.tweet,
-                                myDataset.type,
-                                myDataset.attack
-                            );
-                            const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
-                            if (reflect === false) {
-                                // socketでHP0になった側のフォロワー入れ替えへ移行
-                                console.log('HPが0になったよ!');
+                        if (!damageCalculated) {
+                            const myHitJudge = hit(myDataset.accuracy);
+                            const enemyHitJudge = hit(enemyDataset.accuracy);
+                            const myRandomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
+                            const enemyRandomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
+                            if (myHitJudge === true) {
+                                const damageDone = await attackDamage(
+                                    myName.textContent,
+                                    myType.textContent,
+                                    enemyType.textContent,
+                                    myFollower.dataset.followerattack,
+                                    enemyFollower.dataset.enemydefense,
+                                    myDataset.tweet,
+                                    myDataset.type,
+                                    myDataset.attack,
+                                    myRandomNum
+                                );
+                                const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                                if (reflect === false) {
+                                    // socketでHP0になった側のフォロワー入れ替えへ移行
+                                    console.log('HPが0になったよ!');
+                                }
+                            } else {
+                                await missLog(myName.textContent);
                             }
-                        } else {
-                            await missLog(myName.textContent);
-                        }
-                        await setTimeOut();
-                        if (hit(enemyDataset.accuracy) === true) {
-                            const damageReceived = await attackDamage(
-                                enemyName.textContent,
-                                enemyType.textContent,
-                                myType.textContent,
-                                enemyFollower.dataset.enemyattack,
-                                myFollower.dataset.followerdefense,
-                                enemyDataset.tweet,
-                                enemyDataset.type,
-                                enemyDataset.attack
-                            );
-                            const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
-                            if (reflect === false) {
-                                // socketでHP0になった側のフォロワー入れ替えへ移行
-                                console.log('HPが0になったよ!');
-                                dying(myName.textContent, myFollower);
-                                return
+                            await setTimeOut();
+                            if (enemyHitJudge === true) {
+                                const damageReceived = await attackDamage(
+                                    enemyName.textContent,
+                                    enemyType.textContent,
+                                    myType.textContent,
+                                    enemyFollower.dataset.enemyattack,
+                                    myFollower.dataset.followerdefense,
+                                    enemyDataset.tweet,
+                                    enemyDataset.type,
+                                    enemyDataset.attack,
+                                    enemyRandomNum
+                                );
+                                const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                                if (reflect === false) {
+                                    // socketでHP0になった側のフォロワー入れ替えへ移行
+                                    console.log('HPが0になったよ!');
+                                    dying(myName.textContent, myFollower);
+                                    return
+                                }
+                            } else {
+                                await missLog(enemyName.textContent);
                             }
+                            socket.emit('checkProcessed', {
+                                myDataset,
+                                myHitJudge,
+                                enemyHitJudge,
+                                myRandomNum,
+                                enemyRandomNum,
+                                priority,
+                                roomID
+                            });
                         } else {
-                            await missLog(enemyName.textContent);
+                            if (alreadyMyHitJudge === true) {
+                                const damageDone = await attackDamage(
+                                    myName.textContent,
+                                    myType.textContent,
+                                    enemyType.textContent,
+                                    myFollower.dataset.followerattack,
+                                    enemyFollower.dataset.enemydefense,
+                                    myDataset.tweet,
+                                    myDataset.type,
+                                    myDataset.attack,
+                                    data.myRandomNum
+                                );
+                                const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                                if (reflect === false) {
+                                    // socketでHP0になった側のフォロワー入れ替えへ移行
+                                    console.log('HPが0になったよ!');
+                                }
+                            } else {
+                                await missLog(myName.textContent);
+                            }
+                            await setTimeOut();
+                            if (alreadyEnemyHitJudge === true) {
+                                const damageReceived = await attackDamage(
+                                    enemyName.textContent,
+                                    enemyType.textContent,
+                                    myType.textContent,
+                                    enemyFollower.dataset.enemyattack,
+                                    myFollower.dataset.followerdefense,
+                                    enemyDataset.tweet,
+                                    enemyDataset.type,
+                                    enemyDataset.attack,
+                                    data.enemyRandomNum
+                                );
+                                const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                                if (reflect === false) {
+                                    // socketでHP0になった側のフォロワー入れ替えへ移行
+                                    console.log('HPが0になったよ!');
+                                    dying(myName.textContent, myFollower);
+                                    return
+                                }
+                            } else {
+                                await missLog(enemyName.textContent);
+                            }
+                            socket.emit('checkProcessed', {
+                                myDataset,
+                                roomID
+                            });
                         }
-                        socket.emit('checkProcessed', {
-                            myDataset,
-                            roomID
-                        });
                     } else {
                         console.log('skill:skill -> 後攻');
                         // 双方こうげき -> 後攻
-                        if (hit(enemyDataset.accuracy) === true) {
-                            const damageReceived = await attackDamage(
-                                enemyName.textContent,
-                                enemyType.textContent,
-                                myType.textContent,
-                                enemyFollower.dataset.enemyattack,
-                                myFollower.dataset.followerdefense,
-                                enemyDataset.tweet,
-                                enemyDataset.type,
-                                enemyDataset.attack
-                            );
-                            const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
-                            if (reflect === false) {
-                                // socketでHP0になった側のフォロワー入れ替えへ移行
-                                console.log('HPが0になったよ!');
-                                dying(myName.textContent, myFollower);
-                                return
+                        if (!damageCalculated) {
+                            const myHitJudge = hit(myDataset.accuracy);
+                            const enemyHitJudge = hit(enemyDataset.accuracy);
+                            const myRandomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
+                            const enemyRandomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
+                            if (enemyHitJudge === true) {
+                                const damageReceived = await attackDamage(
+                                    enemyName.textContent,
+                                    enemyType.textContent,
+                                    myType.textContent,
+                                    enemyFollower.dataset.enemyattack,
+                                    myFollower.dataset.followerdefense,
+                                    enemyDataset.tweet,
+                                    enemyDataset.type,
+                                    enemyDataset.attack,
+                                    enemyRandomNum
+                                );
+                                const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                                if (reflect === false) {
+                                    // socketでHP0になった側のフォロワー入れ替えへ移行
+                                    console.log('HPが0になったよ!');
+                                    dying(myName.textContent, myFollower);
+                                    return
+                                }
+                            } else {
+                                await missLog(enemyName.textContent);
                             }
-                        } else {
-                            await missLog(enemyName.textContent);
-                        }
-                        await setTimeOut();
-                        if (hit(myDataset.accuracy) === true) {
-                            const damageDone = await attackDamage(
-                                myName.textContent,
-                                myType.textContent,
-                                enemyType.textContent,
-                                myFollower.dataset.followerattack,
-                                enemyFollower.dataset.enemydefense,
-                                myDataset.tweet,
-                                myDataset.type,
-                                myDataset.attack
-                            );
-                            const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
-                            if (reflect === false) {
-                                // socketでHP0になった側のフォロワー入れ替えへ移行
-                                console.log('HPが0になったよ!');
+                            await setTimeOut();
+                            if (myHitJudge === true) {
+                                const damageDone = await attackDamage(
+                                    myName.textContent,
+                                    myType.textContent,
+                                    enemyType.textContent,
+                                    myFollower.dataset.followerattack,
+                                    enemyFollower.dataset.enemydefense,
+                                    myDataset.tweet,
+                                    myDataset.type,
+                                    myDataset.attack,
+                                    myRandomNum
+                                );
+                                const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                                if (reflect === false) {
+                                    // socketでHP0になった側のフォロワー入れ替えへ移行
+                                    console.log('HPが0になったよ!');
+                                }
+                            } else {
+                                await missLog(myName.textContent);
                             }
+                            socket.emit('checkProcessed', {
+                                myDataset,
+                                myHitJudge,
+                                enemyHitJudge,
+                                myRandomNum,
+                                enemyRandomNum,
+                                priority,
+                                roomID
+                            });
                         } else {
-                            await missLog(myName.textContent);
+                            if (alreadyEnemyHitJudge === true) {
+                                const damageReceived = await attackDamage(
+                                    enemyName.textContent,
+                                    enemyType.textContent,
+                                    myType.textContent,
+                                    enemyFollower.dataset.enemyattack,
+                                    myFollower.dataset.followerdefense,
+                                    enemyDataset.tweet,
+                                    enemyDataset.type,
+                                    enemyDataset.attack,
+                                    data.enemyRandomNum
+                                );
+                                const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
+                                if (reflect === false) {
+                                    // socketでHP0になった側のフォロワー入れ替えへ移行
+                                    console.log('HPが0になったよ!');
+                                    dying(myName.textContent, myFollower);
+                                    return
+                                }
+                            } else {
+                                await missLog(enemyName.textContent);
+                            }
+                            await setTimeOut();
+                            if (alreadyMyHitJudge === true) {
+                                const damageDone = await attackDamage(
+                                    myName.textContent,
+                                    myType.textContent,
+                                    enemyType.textContent,
+                                    myFollower.dataset.followerattack,
+                                    enemyFollower.dataset.enemydefense,
+                                    myDataset.tweet,
+                                    myDataset.type,
+                                    myDataset.attack,
+                                    data.myRandomNum
+                                );
+                                const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
+                                if (reflect === false) {
+                                    // socketでHP0になった側のフォロワー入れ替えへ移行
+                                    console.log('HPが0になったよ!');
+                                }
+                            } else {
+                                await missLog(myName.textContent);
+                            }
+                            socket.emit('checkProcessed', {
+                                myDataset,
+                                roomID
+                            });
                         }
-                        socket.emit('checkProcessed', {
-                            myDataset,
-                            roomID
-                        });
                     }
                 }
             }
