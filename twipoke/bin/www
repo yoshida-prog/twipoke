@@ -180,8 +180,6 @@ io.sockets.on('connection', (socket) => {
     socket.to(data.roomID).adapter.nsp.sockets.get(socket.id).isStartAction = true;
     for (const id of allID) {
       if (id != socket.id) {
-        socket.to(data.roomID).adapter.nsp.sockets.get(socket.id).isProcessed = false;
-        socket.to(data.roomID).adapter.nsp.sockets.get(id).isProcessed = false;
         const isStartAction = socket.to(data.roomID).adapter.nsp.sockets.get(id).isStartAction;
         if (isStartAction === true) {
           io.to(id).emit('actionStart', {
@@ -226,9 +224,27 @@ io.sockets.on('connection', (socket) => {
     const allID = await io.in(data.roomID).allSockets();
     for (const id of allID) {
       if (id != socket.id) {
-        socket.to(data.roomID).adapter.nsp.sockets.get(socket.id).isStartAction = false;
+        socket.to(data.roomID).adapter.nsp.sockets.get(id).isProcessed = false;
         socket.to(data.roomID).adapter.nsp.sockets.get(id).isStartAction = false;
         io.to(id).emit('actionEnd');
+      }
+    }
+  });
+
+  // フォロワーのHPが0になった場合の処理
+  socket.on('followerChangeDueToDied', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('diedEnemyFollower', {
+          enemyName: data.enemyName,
+          enemyIcon: data.enemyIcon,
+          enemyType: data.enemyType,
+          enemyHP: data.enemyHP,
+          enemyMaxHP: data.enemyMaxHP,
+          enemyAttack: data.enemyAttack,
+          enemyDefense: data.enemyDefense
+        });
       }
     }
   });
