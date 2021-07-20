@@ -9,13 +9,17 @@ module.exports = async (req, res) => {
     const followers = Object.keys(req.query);
     const userRef = await firestoreDB.db.collection('Users').doc(userID);
     const followersRef = await userRef.collection('followers');
+    const userDoc = await userRef.get();
+    const twitterName = userDoc.data().twitterName;
     for (const follower of followers) {
         const doc = await followersRef.doc(follower).get();
         followerObj[follower] = doc.data();
     }
     res.render('matchRoom', {
         roomID,
-        followerObj
+        followerObj,
+        followers,
+        twitterName
     });
     
   };
