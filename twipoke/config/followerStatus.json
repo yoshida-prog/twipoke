@@ -1,6 +1,6 @@
 {
-    "hp_max": 200,
-    "hp_min": 100,
+    "hp_max": 2,
+    "hp_min": 1,
     "attack_max": 200,
     "attack_min": 30,
     "defense_max": 200,

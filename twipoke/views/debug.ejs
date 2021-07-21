@@ -82,7 +82,7 @@
                             </div>
                         </div>
                     </div>
-                    <% for (var i = 0; i < 4; i++) { %>
+                    <% for (let i = 0; i < 4; i++) { %>
                     <% const skillNum = 'tweet' + i; %>
                     <% const skill = followerObj[key][skillNum] %>
                     <% const accuracy = (skill.accuracy >= 100) ? 100 : skill.accuracy %>
@@ -100,7 +100,7 @@
         <!-- わざ選択 -->
         <% followers.forEach((follower, key) => { %>
             <div id="<%= follower %>skills" class="skillsContainer">
-                <% for (var i = 0; i < 4; i++) { %>
+                <% for (let i = 0; i < 4; i++) { %>
                 <% const skillNum = 'tweet' + i; %>
                 <% const skill = followerObj[follower][skillNum] %>
                 <% const accuracy = (skill.accuracy >= 100) ? 100 : skill.accuracy %>
@@ -122,27 +122,14 @@
 
     <script src="/socket.io.js"></script>
     <script>
-        // socket.ioで使う定義値----------------------------------------------
-        var socket = io();
-        var isMerge = false; //相互処理に使う待機状態解除フラグ
-        var priority = null; //行動の優先順位を決定する
+        let socket = io();
+        let isMerge = false; //相互処理に使う待機状態解除フラグ
+        let priority = null; //行動の優先順位を決定する
+        let dyingNum = 0;
+        let defeatNum = 0;
+        let rate = <%= rate %>;
         const roomID = <%= roomID %>;
         const twitterName = '<%= twitterName %>';
-        // -----------------------------------------------------------------
-        const weakTypeCompatibility = { // keyが攻撃側、valueが受け側
-            fire: 'grass',
-            water: 'fire',
-            electric: 'water',
-            grass: 'water',
-            twi: 'normal'
-        };
-        const strongTypeCompatibility = {
-            fire: 'water',
-            water: 'grass',
-            electric: 'grass',
-            grass: 'fire',
-            twi: 'twi'
-        };
         const myName = document.getElementById('myName');
         const myIcon = document.getElementById('myIcon');
         const myType = document.getElementById('myType');
@@ -162,7 +149,6 @@
         const enemyMaxHP = document.getElementById('enemyMaxHP');
         const enemyHPGauge = document.getElementById('enemyHPGauge');
         const remainingEnemyHP = document.getElementById('remainingEnemyHP');
-        // -----------------------------------------------------------------
         const fixedScreen = document.getElementById('fixedScreen');
         const eventLog = document.getElementById('eventLog');
         const selectBtn = document.getElementById('selectBtn');
@@ -173,7 +159,21 @@
         const enterBtn = document.getElementById('enterBtn');
         const myFollower = document.getElementById('myFollower');
         const enemyFollower = document.getElementById('enemyFollower');
-        var followerKey = myFollower.dataset.follower;
+        const weakTypeCompatibility = { // keyが攻撃側、valueが受け側
+            fire: 'grass',
+            water: 'fire',
+            electric: 'water',
+            grass: 'water',
+            twi: 'normal'
+        };
+        const strongTypeCompatibility = {
+            fire: 'water',
+            water: 'grass',
+            electric: 'grass',
+            grass: 'fire',
+            twi: 'twi'
+        };
+        let followerKey = myFollower.dataset.follower;
 
         // setTimeOut
         const setTimeOut = async () => {
@@ -329,6 +329,7 @@
                 eventLog.textContent = '相手の操作を待機中...';
                 socket.emit('waiting', {
                     dataset: enterBtnDataset,
+                    rate,
                     roomID
                 });
             } else {
@@ -463,7 +464,7 @@
         };
 
         // こうげきをしてHPが0になった時の処理
-        const dying = async (dyingFollower, follower, killed) => {
+        const dying = async (dyingFollower, follower, killed, enemyRate) => {
             const diedFollower = follower.dataset.follower ? follower.dataset.follower : undefined;
             const diedFollowerElement = document.getElementById(diedFollower);
             eventLog.innerHTML = dyingFollower + ' は倒れた!';
@@ -475,17 +476,43 @@
             skillsBtn.disabled = true;
             // 倒されたフォロワーが自分か相手か判別して処理
             if (!killed) {
-                eventLog.innerHTML = '相手の通信待機中...';
+                defeatNum++;
+                if (defeatNum === 3) {
+                    const result = winnerRate(rate, enemyRate);
+                    eventLog.innerHTML = 'バトルに勝利した!!<br><br>レーティング: ' + rate + ' → ' + result + '(+' + (result-rate) + ')';
+                } else {
+                    eventLog.innerHTML = '相手の通信待機中...';
+                }
             } else {
                 // 次に戦闘に出す自分のフォロワーを選ぶ画面を表示
-                eventLog.innerHTML = '次に戦わせるフォロワーを選んでください';
-                enterBtn.style.display = 'block';
-                diedFollowerElement.style.backgroundColor = '#C0C0C0';
-                diedFollowerElement.firstChild.nextSibling.dataset.containertype = 'died';
-                followersElement.classList.toggle('followersShowToggle');
-                actionContainer.style.marginTop = window.getComputedStyle(fixedScreen).getPropertyValue('height');
+                dyingNum++;
+                if (dyingNum === 3) {
+                    const result = loserRate(rate, enemyRate);
+                    eventLog.innerHTML = 'バトルに敗北した...<br><br>レーティング: ' + rate + ' → ' + result + '(-' + (rate-result) + ')';
+                } else {
+                    eventLog.innerHTML = '次に戦わせるフォロワーを選んでください';
+                    enterBtn.style.display = 'block';
+                    diedFollowerElement.style.backgroundColor = '#C0C0C0';
+                    diedFollowerElement.firstChild.nextSibling.dataset.containertype = 'died';
+                    followersElement.classList.toggle('followersShowToggle');
+                    actionContainer.style.marginTop = window.getComputedStyle(fixedScreen).getPropertyValue('height');
+                }
             }
-        }
+        };
+
+        // レーティング計算
+        const winnerRate = (myRate, enemyRate) => {
+            const difference = Math.abs(myRate-enemyRate);
+            const threshold = 16;
+            const newRate = rate + threshold;
+            return newRate;
+        };
+        const loserRate = (myRate, enemyRate) => {
+            const difference = Math.abs(myRate-enemyRate);
+            const threshold = 16;
+            const newRate = rate - threshold;
+            return newRate;
+        };
 
         // 行動開始socket
         socket.on('actionStart', async (data) => {
@@ -585,13 +612,14 @@
                             if (reflect === false) {
                                 // 自分のHPが0になった側のフォロワー入れ替えへ移行
                                 const killed = true;
-                                dying(myName.textContent, myFollower, killed);
+                                dying(myName.textContent, myFollower, killed, data.enemyRate);
                                 socket.emit('checkProcessed', {
                                     myDataset,
                                     myHitJudge,
                                     enemyHitJudge,
                                     myRandomNum,
                                     enemyRandomNum,
+                                    rate,
                                     roomID
                                 });
                                 return
@@ -636,7 +664,7 @@
                             if (reflect === false) {
                                 // socketでHP0になった側のフォロワー入れ替えへ移行
                                 const killed = true;
-                                dying(myName.textContent, myFollower, killed);
+                                dying(myName.textContent, myFollower, killed, data.enemyRate);
                                 socket.emit('checkProcessed', {
                                     myDataset,
                                     myHitJudge,
@@ -644,6 +672,7 @@
                                     myRandomNum,
                                     enemyRandomNum,
                                     priority,
+                                    rate,
                                     roomID
                                 });
                                 return
@@ -692,13 +721,14 @@
                             const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
                             if (reflect === false) {
                                 const killed = false;
-                                dying(enemyName.textContent, enemyFollower, killed);
+                                dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
                                 socket.emit('checkProcessed', {
                                     myDataset,
                                     myHitJudge,
                                     enemyHitJudge,
                                     myRandomNum,
                                     enemyRandomNum,
+                                    rate,
                                     roomID
                                 });
                                 return
@@ -742,13 +772,14 @@
                             if (reflect === false) {
                                 // socketでHP0になった側のフォロワー入れ替えへ移行
                                 const killed = false;
-                                dying(enemyName.textContent, enemyFollower, killed);
+                                dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
                                 socket.emit('checkProcessed', {
                                     myDataset,
                                     myHitJudge,
                                     enemyHitJudge,
                                     myRandomNum,
                                     enemyRandomNum,
+                                    rate,
                                     roomID
                                 });
                                 return
@@ -795,7 +826,7 @@
                                 if (reflect === false) {
                                     // 相手のHPが0になった側のフォロワー入れ替えへ移行
                                     const killed = false;
-                                    dying(enemyName.textContent, enemyFollower, killed);
+                                    dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
                                     socket.emit('checkProcessed', {
                                         myDataset,
                                         myHitJudge,
@@ -803,6 +834,7 @@
                                         myRandomNum,
                                         enemyRandomNum,
                                         priority,
+                                        rate,
                                         roomID
                                     });
                                     return
@@ -827,7 +859,7 @@
                                 if (reflect === false) {
                                     // 自分のHPが0になった側のフォロワー入れ替えへ移行
                                     const killed = true;
-                                    dying(myName.textContent, myFollower, killed);
+                                    dying(myName.textContent, myFollower, killed, data.enemyRate);
                                     socket.emit('checkProcessed', {
                                         myDataset,
                                         myHitJudge,
@@ -835,6 +867,7 @@
                                         myRandomNum,
                                         enemyRandomNum,
                                         priority,
+                                        rate,
                                         roomID
                                     });
                                     return
@@ -868,7 +901,7 @@
                                 if (reflect === false) {
                                     // socketでHP0になった側のフォロワー入れ替えへ移行
                                     const killed = false;
-                                    dying(enemyName.textContent, enemyFollower, killed);
+                                    dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
                                     socket.emit('checkProcessed', {
                                         myDataset,
                                         myHitJudge,
@@ -876,6 +909,7 @@
                                         myRandomNum,
                                         enemyRandomNum,
                                         priority,
+                                        rate,
                                         roomID
                                     });
                                     return
@@ -900,7 +934,7 @@
                                 if (reflect === false) {
                                     // socketでHP0になった側のフォロワー入れ替えへ移行
                                     const killed = true;
-                                    dying(myName.textContent, myFollower, killed);
+                                    dying(myName.textContent, myFollower, killed, data.enemyRate);
                                     socket.emit('checkProcessed', {
                                         myDataset,
                                         myHitJudge,
@@ -908,6 +942,7 @@
                                         myRandomNum,
                                         enemyRandomNum,
                                         priority,
+                                        rate,
                                         roomID
                                     });
                                     return
@@ -943,7 +978,7 @@
                                 if (reflect === false) {
                                     // socketでHP0になった側のフォロワー入れ替えへ移行
                                     const killed = true;
-                                    dying(myName.textContent, myFollower, killed);
+                                    dying(myName.textContent, myFollower, killed, data.enemyRate);
                                     socket.emit('checkProcessed', {
                                         myDataset,
                                         myHitJudge,
@@ -951,6 +986,7 @@
                                         myRandomNum,
                                         enemyRandomNum,
                                         priority,
+                                        rate,
                                         roomID
                                     });
                                     return
@@ -974,7 +1010,7 @@
                                 const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
                                 if (reflect === false) {
                                     const killed = false;
-                                    dying(enemyName.textContent, enemyFollower, killed);
+                                    dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
                                     socket.emit('checkProcessed', {
                                         myDataset,
                                         myHitJudge,
@@ -982,6 +1018,7 @@
                                         myRandomNum,
                                         enemyRandomNum,
                                         priority,
+                                        rate,
                                         roomID
                                     });
                                     return
@@ -1015,7 +1052,7 @@
                                 if (reflect === false) {
                                     // socketでHP0になった側のフォロワー入れ替えへ移行
                                     const killed = true;
-                                    dying(myName.textContent, myFollower, killed);
+                                    dying(myName.textContent, myFollower, killed, data.enemyRate);
                                     socket.emit('checkProcessed', {
                                         myDataset,
                                         myHitJudge,
@@ -1023,6 +1060,7 @@
                                         myRandomNum,
                                         enemyRandomNum,
                                         priority,
+                                        rate,
                                         roomID
                                     });
                                     return
@@ -1047,7 +1085,7 @@
                                 if (reflect === false) {
                                     // socketでHP0になった側のフォロワー入れ替えへ移行
                                     const killed = false;
-                                    dying(enemyName.textContent, enemyFollower, killed);
+                                    dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
                                     socket.emit('checkProcessed', {
                                         myDataset,
                                         myHitJudge,
@@ -1055,6 +1093,7 @@
                                         myRandomNum,
                                         enemyRandomNum,
                                         priority,
+                                        rate,
                                         roomID
                                     });
                                     return

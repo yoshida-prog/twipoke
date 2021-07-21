@@ -11,6 +11,7 @@ module.exports = async (req, res) => {
     const followersRef = await userRef.collection('followers');
     const userDoc = await userRef.get();
     const twitterName = userDoc.data().twitterName;
+    const rate = userDoc.data().rate;
     for (const follower of followers) {
         const doc = await followersRef.doc(follower).get();
         followerObj[follower] = doc.data();
@@ -19,6 +20,7 @@ module.exports = async (req, res) => {
         roomID,
         followerObj,
         followers,
+        rate,
         twitterName
     });
     

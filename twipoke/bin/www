@@ -183,7 +183,8 @@ io.sockets.on('connection', (socket) => {
         const isStartAction = socket.to(data.roomID).adapter.nsp.sockets.get(id).isStartAction;
         if (isStartAction === true) {
           io.to(id).emit('actionStart', {
-            dataset: data.dataset
+            dataset: data.dataset,
+            enemyRate: data.rate
           });
         } else {
           return
@@ -212,7 +213,8 @@ io.sockets.on('connection', (socket) => {
             enemyHitJudge: myHitJudge,
             myRandomNum: enemyRandomNum,
             enemyRandomNum: myRandomNum,
-            priority: data.priority
+            priority: data.priority,
+            enemyRate: data.rate
           });
         }
       }

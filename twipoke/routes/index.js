@@ -8,6 +8,7 @@ var createStatusController = require('../controllers/createStatus');
 var matchPreparationController = require('../controllers/matchPreparation');
 var matchRoomController = require('../controllers/matchRoom');
 var debugController = require('../controllers/debug');
+var matchResultController = require('../controllers/matchResult');
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
@@ -28,6 +29,7 @@ router.get('/login', (req, res) => {
   res.redirect(redirectURL);
 });
 router.get('/home', loginController);
+router.post('/home', matchResultController);
 // -------------------------------------
 
 // GET battle room create page
