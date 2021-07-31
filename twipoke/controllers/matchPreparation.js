@@ -1,6 +1,6 @@
-var firestoreDB = require('../config/firestore_config');
+import { firestoreDB } from '../config/firestore_config';
 
-module.exports = async (req, res, next) => {
+export const matchPreparationController = async (req, res, next) => {
 
     const userID = req.cookies.userID;
     const followersStatus = {};

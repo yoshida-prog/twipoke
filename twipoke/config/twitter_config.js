@@ -1,4 +1,5 @@
-module.exports = {
-    consumer_key: 'bs1GbpPE6WAmQyYuh9vEKTi7H',
-    consumer_secret: 'tPw7n92BDOIxQMyPtyQBVuklooItHrApeUTUi77xeMrcqc9BpP'
+export default
+{
+    consumer_key: process.env.CONSUMER_KEY,
+    consumer_secret: process.env.CONSUMER_SECRET
 };

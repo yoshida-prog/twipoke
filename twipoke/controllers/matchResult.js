@@ -1,11 +1,11 @@
-var firestoreDB = require('../config/firestore_config');
+import { firestoreDB } from '../config/firestore_config';
 
-module.exports = async (req, res, next) => {
+export const matchResultController = async (req, res, next) => {
 
     const userID = req.cookies.userID;
     const userRef = await firestoreDB.db.collection('Users').doc(userID);
     const doc = await firestoreDB.db.collection('Users').doc(userID).get();
-    await userRef.update({
+    await userRef.update({  
         rate: req.body.rate
     });
     if (req.body.result === 'win') {

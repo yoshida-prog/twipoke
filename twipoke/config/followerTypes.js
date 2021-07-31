@@ -1,3 +1,4 @@
+export default
 [
     {"normal": "ノーマル"},
     {"fire": "ほのお"},

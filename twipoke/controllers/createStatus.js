@@ -1,10 +1,10 @@
-var twitter = require('twitter');
-var twitterConfig = require('../config/twitter_config');
-var firestoreDB = require('../config/firestore_config');
-var followerTypes = require('../config/followerTypes');
-var followerStatus = require('../config/followerStatus');
+let twitter = require('twitter');
+import twitterConfig from '../config/twitter_config';
+import followerTypes from '../config/followerTypes';
+import followerStatus from '../config/followerStatus';
+import { docAdd } from '../repository/FollowersCollection';
 
-module.exports = (req, res, next) => {
+export const createStatusController = (req, res, next) => {
 
     const roomID = req.params.id;
     const followerStatusFunc = (statusType_max, statusType_min) => {
@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
     };
 
     // twitterAPI設定-----------------------------------------------------
-    var client = new twitter({
+    let client = new twitter({
         consumer_key: twitterConfig.consumer_key,
         consumer_secret: twitterConfig.consumer_secret,
         access_token_key: req.cookies.tokenKey,
@@ -47,10 +47,12 @@ module.exports = (req, res, next) => {
                     profile.forEach((obj) => {
                         followersID.push(obj.screen_name);
                     });
-                    for (var i = followersID.length; 1 < i; i--) {
-                        const j = Math.floor(Math.random() * i);
-                        [followersID[j], followersID[i - 1]] = [followersID[i -1], followersID[j]];
-                    };
+                    let followersIDLength = followersID.length;
+                    followersID.forEach((obj, index, array) => {
+                        const randomNum = Math.floor(Math.random() * followersIDLength);
+                        [array[randomNum], array[followersIDLength - 1]] = [array[followersIDLength - 1], array[randomNum]];
+                        followersIDLength--;
+                    });
                     const sixFollowersID = followersID.slice(0, 6);
                     resolve(sixFollowersID);
                 } else {
@@ -60,7 +62,7 @@ module.exports = (req, res, next) => {
         });
         // それぞれのフォロワーの最新4つのツイートを取得後、ステータスとツイートにわざ内容を付与
         followers.then(async (value) => {
-            var i = 0;
+            let followerNum = 0;
             for (const screen_name of value) {
                 const followerDatas = {};
                 const params = { screen_name, count: 4 };
@@ -102,25 +104,8 @@ module.exports = (req, res, next) => {
                     }
                 });
                 // firestoreにfollowerDatasの内容を保存
-                const docAdd = async () => {
-                    const indexNum = 'follower' + i;
-                    const followersDoc = await firestoreDB.db.collection('Users').doc(userID).collection('followers').doc(indexNum);
-                    await followersDoc.set({
-                        name: followerDatas.name,
-                        image: followerDatas.image,
-                        followerType: followerDatas.followerType,
-                        hp: followerDatas.hp,
-                        attack: followerDatas.attack,
-                        defense: followerDatas.defense,
-                        speed: followerDatas.speed,
-                        tweet0: followerDatas.tweet0,
-                        tweet1: followerDatas.tweet1,
-                        tweet2: followerDatas.tweet2,
-                        tweet3: followerDatas.tweet3
-                    });
-                };
-                docAdd();
-                i++;
+                docAdd(followerNum, userID, followerDatas);
+                followerNum++;
             }
             res.redirect('/matchPreparation/' + roomID);
         });

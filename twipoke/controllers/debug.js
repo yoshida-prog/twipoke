@@ -1,6 +1,6 @@
-var firestoreDB = require('../config/firestore_config');
+import { firestoreDB } from '../config/firestore_config';
 
-module.exports = async (req, res) => {
+export const debugController = async (req, res) => {
 
     const userID = '1249786122';
     const roomID = 100001;

@@ -1,18 +1,18 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var bodyParser = require('body-parser');
-var twitterConfig = require('./config/twitter_config');
-var indexRouter = require('./routes/index');
+let createError = require('http-errors');
+let express = require('express');
+let path = require('path');
+let cookieParser = require('cookie-parser');
+let logger = require('morgan');
+let bodyParser = require('body-parser');
+import twitterConfig from './config/twitter_config';
+import { indexRouter } from './routes/index';
 
 // TwitterAPI設定-----------------------
-var passport = require('passport');
-var session = require('express-session');
-var TwitterStrategy = require('passport-twitter').Strategy;
-var TWITTER_CONSUMER_KEY = twitterConfig.consumer_key;
-var TWITTER_CONSUMER_SECRET = twitterConfig.consumer_secret;
+let passport = require('passport');
+let session = require('express-session');
+let TwitterStrategy = require('passport-twitter').Strategy;
+let TWITTER_CONSUMER_KEY = twitterConfig.consumer_key;
+let TWITTER_CONSUMER_SECRET = twitterConfig.consumer_secret;
 passport.serializeUser(function (user, done) {
   done(null, user.id);
 });
@@ -35,7 +35,7 @@ passport.use(new TwitterStrategy({
 }));
 //---------------------------------------
 
-var app = express();
+let app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

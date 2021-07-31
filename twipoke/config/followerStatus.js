@@ -1,3 +1,4 @@
+export default
 {
     "hp_max": 2,
     "hp_min": 1,

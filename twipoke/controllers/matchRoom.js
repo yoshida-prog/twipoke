@@ -1,6 +1,6 @@
-var firestoreDB = require('../config/firestore_config');
+import { firestoreDB } from '../config/firestore_config';
 
-module.exports = async (req, res) => {
+export const matchRoomController = async (req, res) => {
 
     const userID = req.cookies.userID;
     const roomID = req.params.id;

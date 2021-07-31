@@ -1,3 +1,4 @@
+export default
 {
   "type": "service_account",
   "project_id": "test-273a8",

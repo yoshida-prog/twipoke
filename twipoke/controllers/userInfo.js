@@ -1,11 +1,11 @@
-var twitter = require('twitter');
-var twitterConfig = require('../config/twitter_config');
-var firestoreDB = require('../config/firestore_config');
+let twitter = require('twitter');
+import twitterConfig from '../config/twitter_config';
+import { firestoreDB } from '../config/firestore_config';
 
-module.exports = (req, res, next) => {
+export const userInfoController = (req, res, next) => {
 
     // twitterAPI設定-----------------------------------------------------
-    var client = new twitter({
+    let client = new twitter({
         consumer_key: twitterConfig.consumer_key,
         consumer_secret: twitterConfig.consumer_secret,
         access_token_key: req.cookies.tokenKey,
@@ -43,7 +43,7 @@ module.exports = (req, res, next) => {
         const referer = req.headers.referer;
         const refererArray = referer.split('/');
         const refererPath = refererArray[refererArray.length - 1];
-        var isCameSearchID = false;
+        let isCameSearchID = false;
         if (refererPath === 'search?') {
             isCameSearchID = true;
         }
