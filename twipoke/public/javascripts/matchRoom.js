@@ -154,7 +154,7 @@ socket.emit('joinMatchRoom', {
 
 // ルーム入室後に相手のフォロワー情報を取得
 socket.on('setEnemyFollower', async (data) => {
-    if (isMerge === false) {
+    if (!isMerge) {
         document.getElementById('enemyFollower').style.opacity = 1;
         enemyName.textContent = data.enemyName;
         enemyIcon.setAttribute('src', data.enemyImg);
@@ -175,7 +175,7 @@ socket.on('setEnemyFollower', async (data) => {
             followerAttack: myFollower.dataset.followerattack,
             followerDefense: myFollower.dataset.followerdefense
         });
-    } else if (isMerge === true) {
+    } else if (isMerge) {
         isMerge = false;
         await setTimeOut();
         selectBtn.style.opacity = 1;
@@ -251,7 +251,7 @@ const changeMyFollower = async (name, icon, type, hp, maxhp, follower, attack, d
     selectBtn.dataset.follower = follower;
     myFollower.style.opacity = 1;
     await setTimeOut();
-    if (died === true) {
+    if (died) {
         socket.emit('followerChangeDueToDied', {
             roomID,
             enemyName: name,
@@ -416,7 +416,7 @@ socket.on('actionStart', async (data) => {
     if (myDataset.containertype === 'follower') {
         if (enemyDataset.containertype === 'follower') {
             priority = (Number(myDataset.hp) > Number(enemyDataset.hp)) ? true : false;
-            if (priority === true) {
+            if (priority) {
                 // 双方フォロワー交換 -> 先攻
                 await changeMyFollower(
                     myDataset.name,
@@ -485,7 +485,7 @@ socket.on('actionStart', async (data) => {
                     myDataset.defense
                 );
                 await setTimeOut();
-                if (enemyHitJudge === true) {
+                if (enemyHitJudge) {
                     const damageReceived = await attackDamage(
                         enemyName.textContent,
                         enemyType.textContent,
@@ -498,7 +498,7 @@ socket.on('actionStart', async (data) => {
                         enemyRandomNum
                     );
                     const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
-                    if (reflect === false) {
+                    if (!reflect) {
                         // 自分のHPが0になった側のフォロワー入れ替えへ移行
                         const killed = true;
                         dying(myName.textContent, myFollower, killed, data.enemyRate);
@@ -536,7 +536,7 @@ socket.on('actionStart', async (data) => {
                     myDataset.defense
                 );
                 await setTimeOut();
-                if (alreadyEnemyHitJudge === true) {
+                if (alreadyEnemyHitJudge) {
                     const damageReceived = await attackDamage(
                         enemyName.textContent,
                         enemyType.textContent,
@@ -549,7 +549,7 @@ socket.on('actionStart', async (data) => {
                         data.enemyRandomNum
                     );
                     const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
-                    if (reflect === false) {
+                    if (!reflect) {
                         // socketでHP0になった側のフォロワー入れ替えへ移行
                         const killed = true;
                         dying(myName.textContent, myFollower, killed, data.enemyRate);
@@ -592,7 +592,7 @@ socket.on('actionStart', async (data) => {
                     enemyDataset.defense
                 );
                 setTimeOut();
-                if (myHitJudge === true) {
+                if (myHitJudge) {
                     const damageDone = await attackDamage(
                         myName.textContent,
                         myType.textContent,
@@ -605,7 +605,7 @@ socket.on('actionStart', async (data) => {
                         myRandomNum
                     );
                     const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
-                    if (reflect === false) {
+                    if (!reflect) {
                         const killed = false;
                         dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
                         socket.emit('checkProcessed', {
@@ -641,7 +641,7 @@ socket.on('actionStart', async (data) => {
                     enemyDataset.defense
                 );
                 await setTimeOut();
-                if (alreadyMyHitJudge === true) {
+                if (alreadyMyHitJudge) {
                     const damageDone = await attackDamage(
                         myName.textContent,
                         myType.textContent,
@@ -654,7 +654,7 @@ socket.on('actionStart', async (data) => {
                         data.myRandomNum
                     );
                     const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
-                    if (reflect === false) {
+                    if (!reflect) {
                         // socketでHP0になった側のフォロワー入れ替えへ移行
                         const killed = false;
                         dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
@@ -688,14 +688,14 @@ socket.on('actionStart', async (data) => {
                 priority = data.priority;
                 priority = !priority;
             }
-            if (priority === true) {
+            if (priority) {
                 // 双方こうげき -> 先攻
                 if (!damageCalculated) {
                     const myHitJudge = hit(myDataset.accuracy);
                     const enemyHitJudge = hit(enemyDataset.accuracy);
                     const myRandomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
                     const enemyRandomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
-                    if (myHitJudge === true) {
+                    if (myHitJudge) {
                         const damageDone = await attackDamage(
                             myName.textContent,
                             myType.textContent,
@@ -708,7 +708,7 @@ socket.on('actionStart', async (data) => {
                             myRandomNum
                         );
                         const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
-                        if (reflect === false) {
+                        if (!reflect) {
                             // 相手のHPが0になった側のフォロワー入れ替えへ移行
                             const killed = false;
                             dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
@@ -728,7 +728,7 @@ socket.on('actionStart', async (data) => {
                         await missLog(myName.textContent);
                     }
                     await setTimeOut();
-                    if (enemyHitJudge === true) {
+                    if (enemyHitJudge) {
                         const damageReceived = await attackDamage(
                             enemyName.textContent,
                             enemyType.textContent,
@@ -741,7 +741,7 @@ socket.on('actionStart', async (data) => {
                             enemyRandomNum
                         );
                         const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
-                        if (reflect === false) {
+                        if (!reflect) {
                             // 自分のHPが0になった側のフォロワー入れ替えへ移行
                             const killed = true;
                             dying(myName.textContent, myFollower, killed, data.enemyRate);
@@ -770,7 +770,7 @@ socket.on('actionStart', async (data) => {
                         roomID
                     });
                 } else {
-                    if (alreadyMyHitJudge === true) {
+                    if (alreadyMyHitJudge) {
                         const damageDone = await attackDamage(
                             myName.textContent,
                             myType.textContent,
@@ -783,7 +783,7 @@ socket.on('actionStart', async (data) => {
                             data.myRandomNum
                         );
                         const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
-                        if (reflect === false) {
+                        if (!reflect) {
                             // socketでHP0になった側のフォロワー入れ替えへ移行
                             const killed = false;
                             dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
@@ -803,7 +803,7 @@ socket.on('actionStart', async (data) => {
                         await missLog(myName.textContent);
                     }
                     await setTimeOut();
-                    if (alreadyEnemyHitJudge === true) {
+                    if (alreadyEnemyHitJudge) {
                         const damageReceived = await attackDamage(
                             enemyName.textContent,
                             enemyType.textContent,
@@ -816,7 +816,7 @@ socket.on('actionStart', async (data) => {
                             data.enemyRandomNum
                         );
                         const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
-                        if (reflect === false) {
+                        if (!reflect) {
                             // socketでHP0になった側のフォロワー入れ替えへ移行
                             const killed = true;
                             dying(myName.textContent, myFollower, killed, data.enemyRate);
@@ -847,7 +847,7 @@ socket.on('actionStart', async (data) => {
                     const enemyHitJudge = hit(enemyDataset.accuracy);
                     const myRandomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
                     const enemyRandomNum = (Math.floor(Math.random() * (100 - 85)) + 85) / 100;
-                    if (enemyHitJudge === true) {
+                    if (enemyHitJudge) {
                         const damageReceived = await attackDamage(
                             enemyName.textContent,
                             enemyType.textContent,
@@ -860,7 +860,7 @@ socket.on('actionStart', async (data) => {
                             enemyRandomNum
                         );
                         const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
-                        if (reflect === false) {
+                        if (!reflect) {
                             // socketでHP0になった側のフォロワー入れ替えへ移行
                             const killed = true;
                             dying(myName.textContent, myFollower, killed, data.enemyRate);
@@ -880,7 +880,7 @@ socket.on('actionStart', async (data) => {
                         await missLog(enemyName.textContent);
                     }
                     await setTimeOut();
-                    if (myHitJudge === true) {
+                    if (myHitJudge) {
                         const damageDone = await attackDamage(
                             myName.textContent,
                             myType.textContent,
@@ -893,7 +893,7 @@ socket.on('actionStart', async (data) => {
                             myRandomNum
                         );
                         const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
-                        if (reflect === false) {
+                        if (!reflect) {
                             const killed = false;
                             dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
                             socket.emit('checkProcessed', {
@@ -921,7 +921,7 @@ socket.on('actionStart', async (data) => {
                         roomID
                     });
                 } else {
-                    if (alreadyEnemyHitJudge === true) {
+                    if (alreadyEnemyHitJudge) {
                         const damageReceived = await attackDamage(
                             enemyName.textContent,
                             enemyType.textContent,
@@ -934,7 +934,7 @@ socket.on('actionStart', async (data) => {
                             data.enemyRandomNum
                         );
                         const reflect = await reflectDamage(damageReceived, myHP, myMaxHP.textContent, myHPGauge, remainingMyHP);
-                        if (reflect === false) {
+                        if (!reflect) {
                             // socketでHP0になった側のフォロワー入れ替えへ移行
                             const killed = true;
                             dying(myName.textContent, myFollower, killed, data.enemyRate);
@@ -954,7 +954,7 @@ socket.on('actionStart', async (data) => {
                         await missLog(enemyName.textContent);
                     }
                     await setTimeOut();
-                    if (alreadyMyHitJudge === true) {
+                    if (alreadyMyHitJudge) {
                         const damageDone = await attackDamage(
                             myName.textContent,
                             myType.textContent,
@@ -967,7 +967,7 @@ socket.on('actionStart', async (data) => {
                             data.myRandomNum
                         );
                         const reflect = await reflectDamage(damageDone, enemyHP, enemyMaxHP.textContent, enemyHPGauge, remainingEnemyHP);
-                        if (reflect === false) {
+                        if (!reflect) {
                             // socketでHP0になった側のフォロワー入れ替えへ移行
                             const killed = false;
                             dying(enemyName.textContent, enemyFollower, killed, data.enemyRate);
@@ -998,7 +998,7 @@ socket.on('actionStart', async (data) => {
 
 // 1ターンの最後の処理、ループ解除
 socket.on('actionEnd', async () => {
-    if (isMerge === true) {
+    if (isMerge) {
         eventLog.innerHTML = twitterName + ' はどうする?';
         return
     } else {

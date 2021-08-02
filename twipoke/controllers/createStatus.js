@@ -1,4 +1,4 @@
-let twitter = require('twitter');
+import twitter from 'twitter';
 import twitterConfig from '../config/twitter_config';
 import followerTypes from '../config/followerTypes';
 import followerStatus from '../config/followerStatus';
@@ -13,7 +13,7 @@ export const createStatusController = (req, res, next) => {
     };
 
     // twitterAPI設定-----------------------------------------------------
-    let client = new twitter({
+    const client = new twitter({
         consumer_key: twitterConfig.consumer_key,
         consumer_secret: twitterConfig.consumer_secret,
         access_token_key: req.cookies.tokenKey,

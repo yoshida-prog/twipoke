@@ -1,4 +1,4 @@
-let passport = require('passport');
+import passport from 'passport';
 
 export const twitterAuthController = (req, res) => {
     const userID = passport.session.id;

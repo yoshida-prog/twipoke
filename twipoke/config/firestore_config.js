@@ -1,4 +1,4 @@
-let admin = require('firebase-admin');
+import admin from 'firebase-admin';
 import serviceAccount from './serviceAccountKey';
 
 admin.initializeApp({

@@ -32,7 +32,7 @@ socket.emit('join', {
 // 対戦部屋に2人目が入室したらサーバー側から相手のデータを受け取りフロントに反映させる
 // その後、自分のデータを相手に送信するイベントを発火
 socket.on('sendMyData', data => {
-    if (flg === false) {
+    if (!flg) {
         const imgElement = document.createElement('img');
         const enemyDatas = [data.twitterName, data.twitterID];
         const enemyBattleDatas = [(data.win + data.lose) + '戦 ', data.win + '勝 ', data.lose + '負'];
@@ -55,7 +55,7 @@ socket.on('sendMyData', data => {
         }
         enemyContainer.appendChild(battleDatasElement);
         flg = !flg;
-        if (flg === true) {
+        if (flg) {
             socket.emit('sendEnemyData', {
                 roomID,
                 profileImage,

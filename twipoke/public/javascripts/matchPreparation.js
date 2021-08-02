@@ -80,7 +80,7 @@ socket.emit('joinPreparationRoom', {
 });
 
 socket.on('myFollowersType', data => {
-if (flg === false) {
+if (!flg) {
     const enemyTypes = data.types;
     // 敵のフォロワーたちのタイプを要素に入れる-----------------
     const enemyTypesDoc = document.getElementById('enemyTypes');
@@ -98,7 +98,7 @@ if (flg === false) {
         }
     });
     flg = !flg;
-    if (flg === true) {
+    if (flg) {
     socket.emit('sendMyFollowersType', {
         roomID,
         types
