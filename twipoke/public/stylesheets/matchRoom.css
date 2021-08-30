@@ -1,0 +1,268 @@
+body {
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fbf0e4;
+    margin: 0 auto;
+    color: #2F2F2F;
+}
+
+p {
+    margin: 0;
+}
+
+.fixedScreen {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: #fbf0e4;
+    z-index: 20;
+}
+
+.battleScreenContainer {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    margin-top: 14px;
+}
+
+.enemyFollowerContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-bottom: 30px;
+    opacity: 0;
+}
+
+.followerContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-bottom: 30px;
+}
+
+.followerIcon {
+    width: 82px;
+    height: 82px;
+    border-radius: 41px;
+    border: 1px solid #2f2f2f;
+}
+
+.enemyFollowerInfo {
+    display: flex;
+    flex-direction: column;
+    width: 40%;
+    margin-top: 10px;
+}
+
+.myFollowerInfo {
+    display: flex;
+    flex-direction: column;
+    width: 40%;
+    margin-top: 25px;
+}
+
+.enemyGauge {
+    width: 100%;
+    height: 16px;
+    margin-left: 10px;
+    border: 1px solid #2f2f2f;
+}
+
+.myGauge {
+    width: 100%;
+    height: 16px;
+    margin-left: 10px;
+    border: 1px solid #2f2f2f;
+}
+
+.remainingMyHP {
+    width: 100%;
+    height: 16px;
+    background-color: #4acc5f;
+}
+.remainingEnemyHP {
+    width: 100%;
+    height: 16px;
+    background-color: #4acc5f;
+}
+
+.hpGauge {
+    display: flex;
+    align-items: center;
+}
+
+p.typeContent {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.ground {
+    width: 140px;
+    height: 50px;
+    background-color: #2f8829a6;
+    border-radius: 70px/25px;
+    position: absolute;
+    top: 60px;
+    z-index: -1;
+}
+
+.followerIconContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.eventLogContent {
+    width: 100%;
+    min-height: 72px;
+    background-color: #fafafa;
+    border: 1px solid #2f2f2f;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+.selectActionContainer {
+    display: flex;
+    opacity: 0.2;
+}
+
+.btn {
+    display: block;
+    padding: 0;
+    border: 1px solid #2f2f2f;
+    height: 42px;
+    box-sizing: content-box;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.selectActionContainer > .btn {
+    width: 50%;
+}
+
+.followerSelectBtn {
+    background-color: #4acc5f;
+    color: #2F2F2F;
+}
+
+.skillSelectBtn {
+    background-color: #e09494;
+    color: #2F2F2F;
+}
+
+.actionContainer {
+    margin-bottom: 42px;
+}
+
+/* わざ選択画面 */
+.skillsContainer {
+    display: none;
+    background-color: #FFE3CE;
+}
+
+.skillsContainer > .skill {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border: 1px solid #2f2f2f;
+    position: relative;
+}
+
+/* フォロワー選択画面 */
+.followers {
+    display: none;
+}
+
+.followersContainer {
+    padding: 10px 20px 1px 20px;
+    background-color: #FFE3CE;
+    border-bottom: 1px solid #2f2f2f;
+    position: relative;
+}
+
+.followerStatusContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.followerStatusContainer > img {
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+}
+
+.followerInfo {
+    margin: 4px 0;
+}
+
+.followerHead {
+    text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.followerStatus {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.status {
+    width: 50%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.status > span {
+    margin: 0 5px;
+}
+
+.followersContainer > .skill {
+    display: flex;
+    flex-direction: column;
+    margin: 12px 0;
+}
+
+/* dammy */
+.dammyContainer {
+    opacity: 0;
+    position: absolute;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+/* 行動決定ボタン */
+.enterBtn {
+    display: none;
+    width: 100%;
+    background-color: #a8a8a8;
+    color: #fafafa;
+    box-sizing: border-box;
+    position: fixed;
+    bottom: 0;
+    z-index: 20;
+}
+
+/* toggle */
+.skillsShowToggle {
+    display: block;
+}
+
+.followersShowToggle {
+    display: block;
+}
+
+.selected {
+    background-color: #e09494;
+}

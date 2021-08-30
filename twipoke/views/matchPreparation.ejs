@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>twipoke</title>
+    <link rel="stylesheet" href="/stylesheets/matchPreparation.css" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
+  <body>
+
+    <div class="announce">
+      <p>戦闘に参加させるフォロワーを3人選んでね</p>
+      <p id="enemyTypes"></p>
+    </div>
+
+    <div id="followers" class="followersContainer">
+      <% Object.keys(followersStatus).forEach((key, index) => { %>
+        <% const value = followersStatus[key] %>
+        <div class="follower">
+          <div id="follower<%= index %>" class="dammyContainer"></div>
+          <div class="followerInfo">
+            <div id="follower<%= index %>Profile" class="followerProfile">
+              <img src="<%= value.image %>" id="follower<%= index %>Img">
+              <div class="followerHead">
+                <p id="follower<%= index %>Name" class="followerName"><%= value.name %></p>
+                <p id="follower<%= index %>Type" class="followerType">タイプ: <%= value.followerType %></p>
+              </div>
+            </div>
+          </div>
+          <div class="followerStatus">
+            <div class="status">
+              <span>HP</span>
+              <span><%= value.hp %></span>
+            </div>
+            <div class="status">
+              <span>こうげき</span>
+              <span><%= value.attack %></span>
+            </div>
+            <div class="status">
+              <span>ぼうぎょ</span>
+              <span><%= value.defense %></span>
+            </div>
+            <div class="status">
+              <span>すばやさ</span>
+              <span><%= value.speed %></span>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <% Object.keys(followersStatus).forEach((key, index) => { %>
+      <div id="follower<%= index %>Skills" class="skillsContainer">
+        <% const value = followersStatus[key] %>
+        <div class="followerStatusContainer">
+          <img src="<%= value.image %>">
+          <div class="followerInfo">
+            <div class="followerHead">
+              <p class="followerName"><%= value.name %></p>
+              <p class="followerType">タイプ: <%= value.followerType %></p>
+            </div>
+            <div class="followerStatus">
+              <div class="status">
+                <span>HP</span>
+                <span><%= value.hp %></span>
+              </div>
+              <div class="status">
+                <span>こうげき</span>
+                <span><%= value.attack %></span>
+              </div>
+              <div class="status">
+                <span>ぼうぎょ</span>
+                <span><%= value.defense %></span>
+              </div>
+              <div class="status">
+                <span>すばやさ</span>
+                <span><%= value.speed %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% for (let i = 0; i < 4; i++) { %>
+          <% const skillNum = 'tweet' + i; %>
+          <% const skill = followersStatus[key][skillNum] %>
+          <% const accuracy = (skill.accuracy >= 100) ? 100 : skill.accuracy %>
+          <div class="skill">
+            <p><%= skill.tweet %></p>
+            <p>タイプ: <%= skill.type %></p>
+            <p>こうげきりょく: <%= skill.attack %></p>
+            <p>めいちゅうりつ: <%= accuracy %></p>
+          </div>
+        <% } %>
+      </div>
+    <% }); %>
+
+    <div class="selectContainer">
+      <div id="selected" class="selectedFollower"></div>
+      <button id="selectBtn" data-followerid="follower0">このフォロワーを選ぶ</button>
+      <form id="decision" class="decisionForm" method="GET">
+        <button type="submit">対戦を始める</button>
+      </form>
+    </div>
+
+    <script src="/socket.io.js"></script>
+    <script>
+      const followersType = <%- JSON.stringify(followersType) %>;
+    </script>
+    <script src="/javascripts/matchPreparation.js"></script>
+
+  </body>
+</html>

@@ -1,8 +1,50 @@
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #fbf0e4;
+  margin: 0 auto;
+  color: #2F2F2F;
 }
 
-a {
-  color: #00B7FF;
+.app-title {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.app-title > h1 {
+  font: normal normal normal 64px/81px Silom;
+  margin: 20px 0;
+}
+
+.app-title > p {
+  margin: 0 0 24px 0;
+  font: normal normal normal 18px/31px Hiragino Sans;
+}
+
+.app-info {
+  margin: 24px 0;
+}
+
+.app-info > p {
+  margin: 0 auto;
+  font: normal normal normal 18px/31px Hiragino Sans;
+  text-align: center;
+}
+
+.twi-cooperation {
+  text-align: center;
+}
+
+.twi-cooperation > .btn {
+  width: 320px;
+  height: 52px;
+  background: #8EC3EA 0% 0% no-repeat padding-box;
+  font: normal normal normal 24px/41px Hiragino Sans;
+  letter-spacing: 0;
+  border-radius: 26px;
+  border: none;
+  color: #f8f5f2;
+  outline: none;
 }

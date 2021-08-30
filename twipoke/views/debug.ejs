@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>twipoke</title>
+    <link rel="stylesheet" href="/stylesheets/matchRoom.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
+  <body>
+
+    <div id="fixedScreen" class="fixedScreen">
+        <!-- 戦闘画面 -->
+        <div id="battleScreen" class="battleScreenContainer">
+            <div id="enemyFollower" class="enemyFollowerContainer">
+                <div class="enemyFollowerInfo">
+                    <p id="enemyName"></p>
+                    <div class="hpAndTypeContent">
+                        <div class="hpGauge"><span>HP</span><div id="enemyHPGauge" class="enemyGauge"><div id="remainingEnemyHP" class="remainingEnemyHP"></div></div></div>
+                        <p class="typeContent"><span id="enemyType"></span><span id="enemyHP"></span>/<span id="enemyMaxHP"></span></p>
+                    </div>
+                </div>
+                <div class="followerIconContainer">
+                    <img id="enemyIcon" class="followerIcon">
+                    <div class="ground"></div>
+                </div>
+            </div>
+            <div id="myFollower" class="followerContainer" data-follower="<%= followers[0] %>" data-followerattack="<%= followerObj[followers[0]].attack %>" data-followerdefense="<%= followerObj[followers[0]].defense %>">
+                <div class="followerIconContainer">
+                    <img id="myIcon" class="followerIcon" src="<%= followerObj[followers[0]].image %>">
+                    <div class="ground"></div>
+                </div>
+                <div class="myFollowerInfo">
+                    <p id="myName"><%= followerObj[followers[0]].name %></p>
+                    <div class="hpAndTypeContent">
+                        <div class="hpGauge"><span>HP</span><div id="myHPGauge" class="myGauge"><div id="remainingMyHP" class="remainingMyHP"></div></div></div>
+                        <p class="typeContent"><span id="myType"><%= followerObj[followers[0]].followerType %></span><span id="myHP"><%= followerObj[followers[0]].hp %></span>/<span id="myMaxHP"><%= followerObj[followers[0]].hp %></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- イベントログ -->
+        <div id="eventLog" class="eventLogContent">対戦相手の入室を待機中...</div>
+
+        <!-- 行動選択ボタン -->
+        <div id="selectBtn" class="selectActionContainer" data-follower="<%= followers[0] %>">
+            <button id="followersBtn" class="followerSelectBtn btn" disabled>フォロワー</button>
+            <button id="skillsBtn" class="skillSelectBtn btn" disabled>たたかう</button>
+        </div>
+    </div>
+
+    <div id="action" class="actionContainer">
+        <!-- フォロワー選択 -->
+        <div id="followers" class="followers">
+            <% Object.keys(followerObj).forEach((key, index) => { %>
+                <div id="<%= key %>" class="followersContainer">
+                    <div class="dammyContainer" data-containertype="follower" data-follower="<%= key %>" data-name="<%= followerObj[key].name %>" data-image="<%= followerObj[key].image %>" data-type="<%= followerObj[key].followerType %>" data-maxhp="<%= followerObj[key].hp %>" data-hp="<%= followerObj[key].hp %>" data-attack="<%= followerObj[key].attack %>" data-defense="<%= followerObj[key].defense %>"></div>
+                    <% const value = followerObj[key] %>
+                    <div class="followerStatusContainer">
+                        <img src="<%= value.image %>">
+                        <div class="followerInfo">
+                            <div class="followerHead">
+                                <p class="followerName"><%= value.name %></p>
+                                <p class="followerType">タイプ: <%= value.followerType %></p>
+                            </div>
+                            <div class="followerStatus">
+                                <div class="status">
+                                    <span>HP</span>
+                                    <span id="<%= key %>HP"><%= value.hp %></span>
+                                </div>
+                                <div class="status">
+                                    <span>こうげき</span>
+                                    <span><%= value.attack %></span>
+                                </div>
+                                <div class="status">
+                                    <span>ぼうぎょ</span>
+                                    <span><%= value.defense %></span>
+                                </div>
+                                <div class="status">
+                                    <span>すばやさ</span>
+                                    <span><%= value.speed %></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% for (let i = 0; i < 4; i++) { %>
+                    <% const skillNum = 'tweet' + i; %>
+                    <% const skill = followerObj[key][skillNum] %>
+                    <% const accuracy = (skill.accuracy >= 100) ? 100 : skill.accuracy %>
+                    <div class="skill">
+                        <p><%= skill.tweet %></p>
+                        <p>タイプ: <%= skill.type %></p>
+                        <p>こうげきりょく: <%= skill.attack %></p>
+                        <p>めいちゅうりつ: <%= accuracy %></p>
+                    </div>
+                    <% } %>
+                </div>
+            <% }); %>
+        </div>
+        
+        <!-- わざ選択 -->
+        <% followers.forEach((follower, key) => { %>
+            <div id="<%= follower %>skills" class="skillsContainer">
+                <% for (let i = 0; i < 4; i++) { %>
+                <% const skillNum = 'tweet' + i; %>
+                <% const skill = followerObj[follower][skillNum] %>
+                <% const accuracy = (skill.accuracy >= 100) ? 100 : skill.accuracy %>
+                <div id="<%= follower %>skill<%= i %>" class="skill">
+                    <div class="dammyContainer" data-containertype="skill" data-follower="follower<%= key %>" data-followerattack="<%= followerObj[follower].attack %>" data-skill="<%= skillNum %>" data-tweet="<%= skill.tweet %>" data-type="<%= skill.type %>" data-attack="<%= skill.attack %>" data-accuracy="<%= accuracy %>" data-speed="<%= followerObj[follower].speed %>"></div>
+                    <p><%= skill.tweet %></p>
+                    <p>タイプ: <%= skill.type %></p>
+                    <p>こうげきりょく: <%= skill.attack %></p>
+                    <p>めいちゅうりつ: <%= accuracy %></p>
+                </div>
+                <% } %>
+            </div>
+        <% }); %>
+
+    </div>
+
+    <!-- 行動決定ボタン -->
+    <button id="enterBtn" class="enterBtn btn" disabled>決定する</button>
+
+    <script src="/socket.io.js"></script>
+    <script>
+        let rate = <%= rate %>;
+        const roomID = <%= roomID %>;
+        const twitterName = '<%= twitterName %>';
+    </script>
+    <script src="/javascripts/debug.js"></script>
+
+  </body>
+</html>

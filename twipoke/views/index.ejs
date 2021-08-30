@@ -1,11 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <title>twipoke</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
   <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
+    <div class="app-title">
+      <h1>Twipoke</h1>
+      <p>Twitterのフォロワーで対戦するアプリ</p>
+    </div>
+    <div class="app-info">
+      <p>
+        レート・ランキング機能対応予定
+      </p>
+      <p>
+        あなたのフォロワーで競い合おう!!
+      </p>
+    </div>
+    <form action="auth/twitter" method="POST" class="twi-cooperation">
+      <button type="submit" class="btn">Twitterと連携して始める</button>
+    </form>
   </body>
 </html>

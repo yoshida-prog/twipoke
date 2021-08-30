@@ -4,22 +4,270 @@
  * Module dependencies.
  */
 
-var app = require('../app');
-var debug = require('debug')('dockerexpress:server');
-var http = require('http');
+let app = require('../app');
+let debug = require('debug')('twipoke:server');
+let http = require('http');
+let firestoreDB = require('../config/firestore_config');
+// const { deconstructPacket } = require('../public/socket.io/client-dist/socket.io');
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+let port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+let server = http.createServer(app);
+
+/**
+ * ADDED!! Require Socket.IO
+ */
+let io = require('socket.io')(server);
+
+/**
+ * start socket.io
+ */
+
+// 対戦ルームの入室処理。相手が入ってきたら自分のデータを相手に送信する。
+io.sockets.on('connection', (socket) => {
+
+  socket.on('enemyCheck', async (data) => {
+    socket.join(data.roomID);
+    const ids = await io.in(data.roomID).allSockets();
+    if (ids.size === 1) {
+      io.to(socket.id).emit('redirectSearchPage');
+      socket.disconnect(true);
+    }
+  })
+
+  socket.on('join', async (data) => {
+    socket.join(data.roomID);
+    const myID = socket.id;
+    const allID = await io.in(data.roomID).allSockets();
+    if (allID.size === 2) {
+      for (const id of allID) {
+        if (id != myID) {
+          io.to(id).emit('sendMyData', {
+            profileImage: data.profileImage,
+            twitterName: data.twitterName,
+            twitterID: data.twitterID,
+            rate: data.rate,
+            win: data.win,
+            lose: data.lose
+          });
+        }
+      }
+    };
+  });
+
+  socket.on('joinPreparationRoom', async (data) => {
+    socket.join(data.roomID);
+    const allID = await io.in(data.roomID).allSockets();
+    const types = data.types;
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('myFollowersType', {
+          types
+        });
+      }
+    }
+  });
+
+  socket.on('sendMyFollowersType', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    const types = data.types;
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('myFollowersType', {
+          types
+        });
+      }
+    }
+  });
+
+  socket.on('sendEnemyData', async (data) => {
+    const myID = socket.id;
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != myID) {
+        io.to(id).emit('sendMyData', {
+          profileImage: data.profileImage,
+          twitterName: data.twitterName,
+          twitterID: data.twitterID,
+          rate: data.rate,
+          win: data.win,
+          lose: data.lose
+        });
+      }
+    }
+  });
+
+  // クライアント側から対戦準備開始ボタンが押された時に発火。
+  // 相手が待機状態であるか確認後、処理を実行する。
+  socket.on('waitingResponse', async (data) => {
+    socket.waitingFlg = data.waitingFlg;
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        const waitingFlg = socket.to(data.roomID).adapter.nsp.sockets.get(id).waitingFlg;
+        if (waitingFlg === true) {
+          io.to(id).emit('startMatchPreparation');
+          io.to(socket.id).emit('startMatchPreparation');
+        } else {
+          io.to(socket.id).emit('waitingEnemy');
+        }
+      }
+    }
+  });
+
+  // 対戦部屋合流処理-----------------------------------------------
+  socket.on('joinMatchRoom', async (data) => {
+    socket.join(data.roomID);
+    const myID = socket.id;
+    const allID = await io.in(data.roomID).allSockets();
+    if (allID.size === 2) {
+      for (const id of allID) {
+        if (id != myID) {
+          io.to(id).emit('setEnemyFollower', {
+            twitterName: data.twitterName,
+            enemyName: data.followerName,
+            enemyImg: data.followerImg,
+            enemyType: data.followerType,
+            enemyHP: data.followerHP,
+            enemyAttack: data.followerAttack,
+            enemyDefense: data.followerDefense
+          });
+        }
+      }
+    };
+  });
+
+  socket.on('sendMyFollower', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('setEnemyFollower', {
+          twitterName: data.twitterName,
+          enemyName: data.followerName,
+          enemyImg: data.followerImg,
+          enemyType: data.followerType,
+          enemyHP: data.followerHP,
+          enemyAttack: data.followerAttack,
+          enemyDefense: data.followerDefense
+        });
+      }
+    }
+  });
+  // -------------------------------------------------------------
+
+  // 待機状態を解除して、相互処理のループを回避する処理
+  socket.on('changeIsMerge', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('loopStop');
+      }
+    }
+  });
+
+  // 相手の行動決定を待機する処理
+  socket.on('waiting', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    socket.to(data.roomID).adapter.nsp.sockets.get(socket.id).isStartAction = true;
+    for (const id of allID) {
+      if (id != socket.id) {
+        const isStartAction = socket.to(data.roomID).adapter.nsp.sockets.get(id).isStartAction;
+        if (isStartAction === true) {
+          io.to(id).emit('actionStart', {
+            dataset: data.dataset,
+            enemyRate: data.rate
+          });
+        } else {
+          return
+        }
+      }
+    }
+  });
+
+  // 相手の行動が処理済みが判別して行動の結果をフロントに反映
+  socket.on('checkProcessed', async (data) => {
+    const myHitJudge = data.myHitJudge;
+    const enemyHitJudge = data.enemyHitJudge;
+    const myRandomNum = data.myRandomNum;
+    const enemyRandomNum = data.enemyRandomNum;
+    const allID = await io.in(data.roomID).allSockets();
+    socket.to(data.roomID).adapter.nsp.sockets.get(socket.id).isProcessed = true;
+    for (const id of allID) {
+      if (id != socket.id) {
+        const enemyProcessed = socket.to(data.roomID).adapter.nsp.sockets.get(id).isProcessed;
+        if (enemyProcessed === true) {
+          io.to(id).emit('actionEnd');
+        } else {
+          io.to(id).emit('actionStart', {
+            dataset: data.myDataset,
+            myHitJudge: enemyHitJudge,// 通信先から見ると双方の命中判定と乱数は反転する
+            enemyHitJudge: myHitJudge,
+            myRandomNum: enemyRandomNum,
+            enemyRandomNum: myRandomNum,
+            priority: data.priority,
+            enemyRate: data.rate
+          });
+        }
+      }
+    }
+  });
+
+  // 相手の行動が処理されていた場合の処理
+  socket.on('enemyActionEnd', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        socket.to(data.roomID).adapter.nsp.sockets.get(id).isProcessed = false;
+        socket.to(data.roomID).adapter.nsp.sockets.get(id).isStartAction = false;
+        io.to(id).emit('actionEnd');
+      }
+    }
+  });
+
+  // フォロワーのHPが0になった場合の処理
+  socket.on('followerChangeDueToDied', async (data) => {
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        io.to(id).emit('diedEnemyFollower', {
+          enemyName: data.enemyName,
+          enemyIcon: data.enemyIcon,
+          enemyType: data.enemyType,
+          enemyHP: data.enemyHP,
+          enemyMaxHP: data.enemyMaxHP,
+          enemyAttack: data.enemyAttack,
+          enemyDefense: data.enemyDefense
+        });
+      }
+    }
+  });
+
+  socket.on('waitingResponse', async (data) => {
+    socket.waitingFlg = data.waitingFlg;
+    const allID = await io.in(data.roomID).allSockets();
+    for (const id of allID) {
+      if (id != socket.id) {
+        const waitingFlg = socket.to(data.roomID).adapter.nsp.sockets.get(id).waitingFlg;
+        if (waitingFlg === true) {
+          io.to(id).emit('startMatchPreparation');
+          io.to(socket.id).emit('startMatchPreparation');
+        } else {
+          io.to(socket.id).emit('waitingEnemy');
+        }
+      }
+    }
+  });
+
+});
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -34,7 +282,7 @@ server.on('listening', onListening);
  */
 
 function normalizePort(val) {
-  var port = parseInt(val, 10);
+  let port = parseInt(val, 10);
 
   if (isNaN(port)) {
     // named pipe
@@ -58,7 +306,7 @@ function onError(error) {
     throw error;
   }
 
-  var bind = typeof port === 'string'
+  let bind = typeof port === 'string'
     ? 'Pipe ' + port
     : 'Port ' + port;
 
@@ -82,8 +330,8 @@ function onError(error) {
  */
 
 function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string'
+  let addr = server.address();
+  let bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);

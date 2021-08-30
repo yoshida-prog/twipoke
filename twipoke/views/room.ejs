@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>twipoke</title>
+    <link rel="stylesheet" href="/stylesheets/room.css"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
+  <body>
+
+    <div class="roomInfoContainer">
+        <h3>部屋ID： <%= roomID %></h3>
+        <p>友達に部屋IDを教えて対戦しよう!!</p>
+    </div>
+
+    <div class="profileContainer">
+        <div class="twitterInfo">
+            <img src="<%- profileImage %>">
+            <div class="twitterNameID">
+                <p><%= twitterName %></p>
+                <p><%= twitterID %></p>
+            </div>
+        </div>
+        <p>レーティング: <%= rate %></p>
+        <p><%= win+lose %>戦 <%= win %>勝 <%= lose %>負</p>
+    </div>
+
+    <div id="matchStartContainer">
+        <button id="matchStartBtn" class="btn" disabled="true">対戦準備を始める</button>
+    </div>
+
+    <div id="enemyContainer" class="profileContainer">
+        <div id="enemyTwiInfo" class="twitterInfo">
+            <div id="enemyNameID" class="twitterNameID"></div>
+        </div>
+    </div>
+
+    <script src="/socket.io.js"></script>
+    <script>
+        const roomID = '<%= roomID %>';
+        const profileImage = '<%= profileImage %>';
+        const twitterName = '<%= twitterName %>';
+        const twitterID = '<%= twitterID %>';
+        const rate = <%= rate %>;
+        const win = <%= win %>;
+        const lose = <%= lose %>;
+        const referer = '<%= referer %>';
+        const isCameSearchID = <%= isCameSearchID %>;
+    </script>
+    <script src="/javascripts/room.js"></script>
+
+  </body>
+</html>
