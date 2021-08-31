@@ -23,7 +23,7 @@ passport.deserializeUser(function (obj, done) {
 passport.use(new TwitterStrategy({
     consumerKey: TWITTER_CONSUMER_KEY,
     consumerSecret: TWITTER_CONSUMER_SECRET,
-    callbackURL: "http://localhost:3000/auth/twitter/callback" //本番環境はここを変える
+    callbackURL: "http://18.217.169.143:3000/auth/twitter/callback" //本番環境はここを変える
 }, function (token, tokenSecret, profile, done) {
     passport.session.id = profile.id;
     passport.session.twitter_token = token;
